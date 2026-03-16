@@ -86,63 +86,49 @@ animation:pulse 2s infinite;
 100%{transform:scale(1)}
 }
 
-/* TABLO */
-.stTable{
-background:white;
-border-radius:10px;
-box-shadow:0 6px 15px rgba(0,0,0,0.1);
-}
-
-/* SIDEBAR */
-section[data-testid="stSidebar"]{
-background:linear-gradient(180deg,#16a34a,#15803d);
-color:white;
-}
-
 </style>
-""",unsafe_allow_html=True)
+""", unsafe_allow_html=True)
 
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE</div>', unsafe_allow_html=True)
 
-# VERİ SAKLAMA
-if 'matches' not in st.session_state:
+# MATCH VERİSİ
+if "matches" not in st.session_state:
     st.session_state.matches = {}
 
 # SIDEBAR
-st.sidebar.header("🕹️ Yönetici Paneli")
+st.sidebar.header("⚽ Skor Gir")
 
 with st.sidebar.form("score_form"):
 
-    week_input = st.number_input("Hafta Seçin", min_value=11, max_value=20, value=11)
+    week = st.number_input("Hafta", min_value=11, max_value=20, value=11)
 
-    is_even = week_input % 2 == 0
-    h_team = "Prospor" if is_even else "Billispor"
-    a_team = "Billispor" if is_even else "Prospor"
+    home = "Prospor" if week % 2 == 0 else "Billispor"
+    away = "Billispor" if home == "Prospor" else "Prospor"
 
-    st.write(f"{h_team} vs {a_team}")
+    st.write(home,"vs",away)
 
     c1,c2 = st.columns(2)
 
-    h_score = c1.number_input(h_team,min_value=0,step=1)
-    a_score = c2.number_input(a_team,min_value=0,step=1)
+    home_score = c1.number_input(home,0,100)
+    away_score = c2.number_input(away,0,100)
 
-    if st.form_submit_button("Skoru Kaydet"):
+    if st.form_submit_button("Kaydet"):
 
-        st.session_state.matches[week_input] = {
-            "Ev":h_team,
-            "EvSkor":h_score,
-            "Dep":a_team,
-            "DepSkor":a_score
+        st.session_state.matches[week] = {
+            "Ev":home,
+            "EvSkor":home_score,
+            "Dep":away,
+            "DepSkor":away_score
         }
 
         st.success("Skor kaydedildi")
 
 # PUAN HESAPLAMA
-def get_standings():
+def get_table():
 
     stats = {
-        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":15,"YG":19,"P":18,"Logo":"billispor.jpg"},
-        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":19,"YG":15,"P":12,"Logo":"prospor.jpg"}
+        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18,"Logo":"billispor.jpg"},
+        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":154,"YG":150,"P":12,"Logo":"prospor.jpg"}
     }
 
     for w,m in st.session_state.matches.items():
@@ -150,11 +136,11 @@ def get_standings():
         stats[m["Ev"]]["O"] +=1
         stats[m["Dep"]]["O"] +=1
 
-        stats[m["Ev"]]["AG"] +=m["EvSkor"]
-        stats[m["Ev"]]["YG"] +=m["DepSkor"]
+        stats[m["Ev"]]["AG"] += m["EvSkor"]
+        stats[m["Ev"]]["YG"] += m["DepSkor"]
 
-        stats[m["Dep"]]["AG"] +=m["DepSkor"]
-        stats[m["Dep"]]["YG"] +=m["EvSkor"]
+        stats[m["Dep"]]["AG"] += m["DepSkor"]
+        stats[m["Dep"]]["YG"] += m["EvSkor"]
 
         if m["EvSkor"] > m["DepSkor"]:
             stats[m["Ev"]]["G"]+=1
@@ -172,7 +158,7 @@ def get_standings():
             stats[m["Ev"]]["P"]+=1
             stats[m["Dep"]]["P"]+=1
 
-    df = pd.DataFrame.from_dict(stats,orient='index').reset_index()
+    df = pd.DataFrame.from_dict(stats,orient="index").reset_index()
 
     df.columns = ["Takım","O","G","B","M","AG","YG","P","Logo"]
 
@@ -186,40 +172,51 @@ tab1,tab2 = st.tabs(["📊 PUAN DURUMU","📅 FİKSTÜR"])
 # PUAN DURUMU
 with tab1:
 
-    df = get_standings()
+    df = get_table()
 
     for i,row in df.iterrows():
 
-        leader = "leader" if i==0 else ""
+        leader = "leader" if i == 0 else ""
 
         st.markdown(f"""
         <div class="team-card {leader}">
-            <img src="file/{row['Logo']}" width="70" style="border-radius:10px;">
-            <div style="flex-grow:1">
-                <h3>{row['Takım']}</h3>
-                <span>{row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M</span>
-            </div>
-            <div style="text-align:right">
-                <div class="points">{row['P']}</div>
-                <div>Averaj {row['Av']}</div>
-            </div>
+
+        <img src="file/{row['Logo']}" width="70">
+
+        <div style="flex-grow:1">
+
+        <h3>{row['Takım']}</h3>
+
+        <span>{row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M</span>
+
         </div>
-        """,unsafe_allow_html=True)
+
+        <div style="text-align:right">
+
+        <div class="points">{row['P']}</div>
+
+        <div>Averaj {row['Av']}</div>
+
+        </div>
+
+        </div>
+        """, unsafe_allow_html=True)
 
     st.table(df[["Takım","O","G","B","M","AG","YG","Av","P"]])
 
 # FİKSTÜR
 with tab2:
 
-    start_date = datetime.date(2026,3,22)
+    start = datetime.date(2026,3,22)
 
     for i in range(10):
 
         w = 11+i
-        date = start_date + datetime.timedelta(days=7*i)
 
-        h = "Prospor" if w%2==0 else "Billispor"
-        a = "Billispor" if h=="Prospor" else "Prospor"
+        date = start + datetime.timedelta(days=7*i)
+
+        home = "Prospor" if w % 2 == 0 else "Billispor"
+        away = "Billispor" if home == "Prospor" else "Prospor"
 
         score = "vs"
         status = "Bekleniyor"
@@ -229,6 +226,7 @@ with tab2:
             m = st.session_state.matches[w]
 
             score = f'<span class="score">{m["EvSkor"]} - {m["DepSkor"]}</span>'
+
             status = "Tamamlandı"
 
         st.markdown(f"""
@@ -237,19 +235,26 @@ with tab2:
         <div style="display:flex;justify-content:space-between">
 
         <div>
+
         <b>{w}. Hafta</b><br>
+
         <small>{date.strftime('%d.%m.%Y')}</small>
+
         </div>
 
         <div>
-        {h} {score} {a}
+
+        {home} {score} {away}
+
         </div>
 
         <div>
+
         {status}
-        </div>
 
         </div>
 
         </div>
-        """,unsafe_allow_html=True)
+
+        </div>
+        """, unsafe_allow_html=True)
