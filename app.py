@@ -5,10 +5,10 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
 
-# --- CSS TASARIM (Tasarım ve Başlık Korundu) ---
+# --- CSS TASARIM ---
 st.markdown("""
 <style>
-.stApp { background: #fdfdfd; }
+.stApp { background: #ffffff; }
 
 /* O GÖSTERİŞLİ BAŞLIK - KORUNDU */
 .league-title {
@@ -37,41 +37,65 @@ st.markdown("""
     margin-bottom: 18px;
     border: 1px solid #f1f5f9;
     box-shadow: 0 10px 25px rgba(0,0,0,0.03);
-    transition: all 0.4s ease;
+    transition: all 0.3s ease;
 }
 
-.leader { 
-    border: 2px solid #fbbf24; 
-    background: linear-gradient(135deg, #fffdf2 0%, #ffffff 100%); 
-}
+.leader { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffdf2 0%, #ffffff 100%); }
 
 .points-val { font-size: 42px; font-weight: 900; color: #16a34a; line-height: 1; }
-.av-val {
-    font-size: 14px; font-weight: 800; color: #64748b;
-    background: #f1f5f9; padding: 6px 14px; border-radius: 12px;
-}
+.av-val { font-size: 14px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 6px 14px; border-radius: 12px; }
 
-/* FORM İKONLARI (G-M-B) */
-.form-container { display: flex; gap: 5px; margin-top: 8px; }
+/* FORM İKONLARI (SON 5 MAÇ) */
+.form-container { display: flex; gap: 4px; margin-top: 10px; }
 .form-dot {
-    width: 24px; height: 24px; border-radius: 6px;
+    width: 26px; height: 26px; border-radius: 8px;
     display: flex; align-items: center; justify-content: center;
     font-size: 12px; font-weight: 900; color: white;
+    box-shadow: 0 2px 4px rgba(0,0,0,0.1);
 }
 .win { background: #22c55e; }
 .loss { background: #ef4444; }
+.draw { background: #94a3b8; }
 
-/* FİKSTÜR */
+/* MODERN FİKSTÜR TASARIMI */
 .modern-fixture {
     background: #ffffff;
+    border: 1px solid #f1f5f9;
     border-radius: 20px;
-    padding: 20px 30px;
-    margin-bottom: 12px;
-    border: 1px solid #f8fafc;
+    padding: 15px 30px;
+    margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
+
+.fixture-teams {
+    display: flex;
+    align-items: center;
+    gap: 30px;
+    flex-grow: 1;
+    justify-content: center;
+    font-weight: 800;
+    font-size: 1.15rem;
+}
+
+.vs-circle {
+    background: #f8fafc;
+    width: 45px;
+    height: 45px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.75rem;
+    font-weight: 900;
+    color: #16a34a;
+    border: 1px solid #e2e8f0;
+}
+
+.score-text { font-size: 1.6rem; color: #16a34a; min-width: 90px; text-align: center; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -82,30 +106,28 @@ if 'matches' not in st.session_state: st.session_state.matches = {}
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("### ⚙️ SKOR MERKEZİ")
-    with st.form("ultra_form"):
+    st.markdown("### ⚙️ SKOR PANELİ")
+    with st.form("score_entry"):
         w_in = st.number_input("Hafta", 11, 20, 11)
-        is_even = w_in % 2 == 0
-        h, a = ("Prospor", "Billispor") if is_even else ("Billispor", "Prospor")
-        st.info(f"📍 {h} vs {a}")
-        col1, col2 = st.columns(2)
-        hs = col1.number_input(f"{h}", 0, 100, 0)
-        as_ = col2.number_input(f"{a}", 0, 100, 0)
-        if st.form_submit_button("✅ SKORU KAYDET"):
+        h, a = ("Prospor", "Billispor") if w_in % 2 == 0 else ("Billispor", "Prospor")
+        st.info(f"Maç: {h} vs {a}")
+        c1, c2 = st.columns(2)
+        hs = c1.number_input(f"{h}", 0, 100, 0)
+        as_ = c2.number_input(f"{a}", 0, 100, 0)
+        if st.form_submit_button("✅ KAYDET"):
             st.session_state.matches[w_in] = {"Ev": h, "EvSkor": hs, "Dep": a, "DepSkor": as_}
             st.rerun()
     
-    if st.button("🚨 Verileri Sıfırla"):
+    if st.button("🗑️ Verileri Sıfırla"):
         st.session_state.matches = {}
         st.rerun()
 
 # --- HESAPLAMA SİSTEMİ ---
 def get_stats():
-    # Billispor: Son maç galibiyet (G), ondan önceki mağlubiyet (M)
-    # Prospor: Tam tersi
+    # Başlangıç verileri (Billispor: M, G sırasıyla son iki maç)
     data = {
-        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["M", "G"]},
-        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["G", "M"]}
+        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
+        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
     }
     
     sorted_weeks = sorted(st.session_state.matches.keys())
@@ -130,23 +152,21 @@ def get_stats():
     return df.sort_values(["P", "Av"], ascending=False)
 
 # --- ARAYÜZ ---
-t1, t2 = st.tabs(["📊 PUAN DURUMU", "🗓️ FİKSTÜR"])
+t1, t2 = st.tabs(["📊 SIRALAMA", "📅 MAÇ TAKVİMİ"])
 
 with t1:
     df = get_stats()
-    
     for i, r in df.iterrows():
         l_css = "leader" if i == 0 else ""
-        # Form göstergesini görselleştirme
-        form_html = "".join([f'<div class="form-dot {"win" if x=="G" else "loss" if x=="M" else "draw"}">{x}</div>' for x in r["form"]])
+        # Son 5 maçı alma
+        form_html = "".join([f'<div class="form-dot {"win" if x=="G" else "loss" if x=="M" else "draw"}">{x}</div>' for x in r["form"][-5:]])
         
         st.markdown(f"""
         <div class="team-card {l_css}">
             <div>
-                <span style="color:#94a3b8; font-weight:800; font-size:14px;">SIRALAMA: {i+1}</span>
-                <h2 style="margin:0; color:#1e293b; letter-spacing:-1px;">{r['Takım'].upper()}</h2>
+                <span style="color:#94a3b8; font-weight:800; font-size:12px; letter-spacing:1px;">LİG SIRALAMASI: {i+1}</span>
+                <h2 style="margin:0; color:#1e293b; letter-spacing:-1px; font-size:28px;">{r['Takım'].upper()}</h2>
                 <div class="form-container">
-                    <span style="font-size:12px; color:#94a3b8; margin-right:10px; align-self:center;">FORM:</span>
                     {form_html}
                 </div>
             </div>
@@ -160,7 +180,7 @@ with t1:
         </div>
         """, unsafe_allow_html=True)
     
-    st.write("### 📝 Detaylı Tablo")
+    st.write("---")
     st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
 
 with t2:
@@ -168,27 +188,26 @@ with t2:
     for i in range(10):
         w = 11 + i
         dt = start + datetime.timedelta(days=7*i)
-        h_t = "Prospor" if w % 2 == 0 else "Billispor"
-        a_t = "Billispor" if h_t == "Prospor" else "Prospor"
+        h_t, a_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         
         done = w in st.session_state.matches
         m_data = st.session_state.matches.get(w)
         
-        score = f"<b style='font-size:24px; color:#16a34a;'>{m_data['EvSkor']} - {m_data['DepSkor']}</b>" if done else "VS"
+        score_html = f"<b class='score-text'>{m_data['EvSkor']} - {m_data['DepSkor']}</b>" if done else '<div class="vs-circle">VS</div>'
         
         st.markdown(f"""
         <div class="modern-fixture">
-            <div style="width:120px;">
+            <div style="width:130px; border-right:2px solid #f8fafc;">
                 <b style="color:#16a34a; font-size:18px;">{w}. HAFTA</b><br>
                 <small style="color:#94a3b8;">{dt.strftime('%d.%m.%Y')}</small>
             </div>
-            <div style="flex-grow:1; display:flex; justify-content:center; align-items:center; gap:40px; font-weight:800;">
-                <span style="width:120px; text-align:right;">{h_t.upper()}</span>
-                {score}
-                <span style="width:120px; text-align:left;">{a_t.upper()}</span>
+            <div class="fixture-teams">
+                <span style="width:140px; text-align:right;">{h_t.upper()}</span>
+                {score_html}
+                <span style="width:140px; text-align:left;">{a_t.upper()}</span>
             </div>
-            <div style="width:100px; text-align:right;">
-                <span style="color:{'#22c55e' if done else '#cbd5e1'};">{'● BİTTİ' if done else '○ BEKLEMEDE'}</span>
+            <div style="width:100px; text-align:right; font-size:0.8rem; font-weight:700;">
+                <span style="color:{'#22c55e' if done else '#cbd5e1'};">{'● TAMAMLANDI' if done else '○ BEKLİYOR'}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
