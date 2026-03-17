@@ -5,12 +5,12 @@ import datetime
 # SAYFA AYARI
 st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
 
-# CSS TASARIM (Gösterişli Başlık + Açık Tema)
+# CSS TASARIM (Tüm yapı korunup fikstür modernize edildi)
 st.markdown("""
 <style>
 .stApp { background: #ffffff; }
 
-/* O GÖSTERİŞLİ BAŞLIK GERİ GELDİ */
+/* O GÖSTERİŞLİ BAŞLIK */
 .league-title {
     font-size: 60px;
     font-weight: 900;
@@ -69,18 +69,66 @@ st.markdown("""
     border-radius: 8px;
 }
 
-/* FİKSTÜR */
-.match-card {
-    background: white;
+/* YENİ MODERN FİKSTÜR TASARIMI */
+.modern-fixture {
+    background: #ffffff;
+    border: 1px solid #f1f5f9;
+    border-radius: 20px;
     padding: 15px 25px;
-    border-radius: 12px;
-    margin-bottom: 10px;
-    border: 1px solid #e2e8f0;
+    margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    border-left: 6px solid #16a34a;
+    box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+    transition: transform 0.2s;
 }
+
+.modern-fixture:hover {
+    transform: translateY(-2px);
+    border-color: #16a34a;
+}
+
+.fixture-date {
+    font-size: 0.85rem;
+    color: #94a3b8;
+    border-right: 2px solid #f1f5f9;
+    padding-right: 20px;
+    min-width: 100px;
+}
+
+.fixture-teams {
+    display: flex;
+    align-items: center;
+    gap: 20px;
+    flex-grow: 1;
+    justify-content: center;
+    font-weight: 700;
+    font-size: 1.1rem;
+}
+
+.vs-circle {
+    background: #f8fafc;
+    width: 40px;
+    height: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 50%;
+    font-size: 0.7rem;
+    color: #16a34a;
+    border: 1px solid #e2e8f0;
+}
+
+.status-badge {
+    padding: 5px 12px;
+    border-radius: 20px;
+    font-size: 0.75rem;
+    font-weight: 600;
+}
+
+.status-waiting { background: #fef9c3; color: #854d0e; }
+.status-done { background: #dcfce7; color: #166534; }
+
 </style>
 """, unsafe_allow_html=True)
 
@@ -101,7 +149,7 @@ with st.sidebar.form("score_form"):
     if st.form_submit_button("Skoru Kaydet"):
         st.session_state.matches[week_input] = {"Ev": h_team, "EvSkor": h_score, "Dep": a_team, "DepSkor": a_score}
 
-# HESAPLAMA MOTORU (İstediğin Goller Girildi)
+# HESAPLAMA MOTORU
 def get_standings():
     stats = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18},
@@ -153,11 +201,29 @@ with tab2:
         date = start_date + datetime.timedelta(days=7*i)
         h = "Prospor" if w % 2 == 0 else "Billispor"
         a = "Billispor" if h == "Prospor" else "Prospor"
-        res = f"<b>{st.session_state.matches[w]['EvSkor']} - {st.session_state.matches[w]['DepSkor']}</b>" if w in st.session_state.matches else "vs"
+        
+        is_done = w in st.session_state.matches
+        if is_done:
+            m = st.session_state.matches[w]
+            score_html = f"<span style='color:#16a34a; font-size:1.4rem;'>{m['EvSkor']} - {m['DepSkor']}</span>"
+            status_html = '<span class="status-badge status-done">Tamamlandı</span>'
+        else:
+            score_html = '<div class="vs-circle">VS</div>'
+            status_html = '<span class="status-badge status-waiting">Bekleniyor</span>'
+
         st.markdown(f"""
-        <div class="match-card">
-            <div style="width:100px;"><b>{w}. Hafta</b><br><small>{date.strftime('%d.%m.%Y')}</small></div>
-            <div style="flex-grow:1; text-align:center; font-size:18px;">{h} &nbsp; {res} &nbsp; {a}</div>
-            <div style="width:100px; text-align:right; color:#16a34a;">⌛</div>
+        <div class="modern-fixture">
+            <div class="fixture-date">
+                <b>{w}. HAFTA</b><br>
+                {date.strftime('%d.%m.%Y')}
+            </div>
+            <div class="fixture-teams">
+                <span style="color:#1e293b;">{h.upper()}</span>
+                {score_html}
+                <span style="color:#1e293b;">{a.upper()}</span>
+            </div>
+            <div style="min-width: 100px; text-align: right;">
+                {status_html}
+            </div>
         </div>
         """, unsafe_allow_html=True)
