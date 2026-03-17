@@ -2,207 +2,155 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-# SAYFA AYARI
-st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
+st.set_page_config(page_title="Velochori Süper Lig", layout="wide")
 
-# CSS TASARIM
+# CSS
 st.markdown("""
 <style>
+.main{background:linear-gradient(135deg,#eef2ff,#f8fafc);}
 
-.main{
-background:linear-gradient(135deg,#eef2ff,#f8fafc);
-}
-
-/* BAŞLIK */
-.league-title{
+.title{
+text-align:center;
 font-size:55px;
 font-weight:900;
-text-align:center;
-margin-bottom:30px;
-background: linear-gradient(90deg,#16a34a,#22c55e,#4ade80);
+background:linear-gradient(90deg,#16a34a,#4ade80);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
+margin-bottom:30px;
 }
 
-/* TAKIM KARTI */
-.team-card{
+/* takım kart */
+.card{
 display:flex;
 align-items:center;
-gap:20px;
+justify-content:space-between;
 background:white;
-padding:18px;
-border-radius:16px;
+padding:20px;
+border-radius:15px;
 margin-bottom:15px;
-border:1px solid #e2e8f0;
-transition:all .35s;
-box-shadow:0 6px 15px rgba(0,0,0,0.07);
+box-shadow:0 6px 15px rgba(0,0,0,0.08);
+transition:.3s;
 }
 
-.team-card:hover{
-transform:translateY(-6px) scale(1.02);
-box-shadow:0 12px 30px rgba(0,0,0,0.18);
+.card:hover{
+transform:scale(1.03);
 }
 
-/* LİDER TAKIM */
+/* lider */
 .leader{
-border:2px solid gold;
-background:linear-gradient(90deg,#fffbe6,#ffffff);
+border:3px solid gold;
+box-shadow:0 0 25px gold;
 }
 
-/* PUAN */
-.points{
-font-size:42px;
+/* skor animasyon */
+.goal{
+font-size:28px;
 font-weight:900;
 color:#16a34a;
-}
-
-/* FİKSTÜR */
-.match-card{
-background:white;
-padding:18px;
-border-radius:14px;
-margin-bottom:12px;
-border-left:6px solid #16a34a;
-transition:all .3s;
-box-shadow:0 4px 10px rgba(0,0,0,0.08);
-}
-
-.match-card:hover{
-transform:scale(1.03);
-box-shadow:0 10px 25px rgba(0,0,0,0.15);
-}
-
-/* SKOR */
-.score{
-font-size:30px;
-font-weight:900;
-padding:0 25px;
-animation:pulse 2s infinite;
+animation:pulse 1.5s infinite;
 }
 
 @keyframes pulse{
 0%{transform:scale(1)}
-50%{transform:scale(1.1)}
+50%{transform:scale(1.15)}
 100%{transform:scale(1)}
 }
 
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE</div>', unsafe_allow_html=True)
+st.markdown('<div class="title">🏆 VELOCHORI SUPER LEAGUE</div>', unsafe_allow_html=True)
 
-# MATCH VERİSİ
+# SESSION
 if "matches" not in st.session_state:
     st.session_state.matches = {}
 
-# SIDEBAR
-st.sidebar.header("⚽ Skor Gir")
+# RESET
+if st.sidebar.button("🔄 Sıfırla"):
+    st.session_state.matches = {}
+    st.rerun()
 
-with st.sidebar.form("score_form"):
+# SKOR GİRİŞ
+st.sidebar.header("⚽ Skor")
 
-    week = st.number_input("Hafta", min_value=11, max_value=20, value=11)
+with st.sidebar.form("form"):
+    w = st.number_input("Hafta",11,20,11)
 
-    home = "Prospor" if week % 2 == 0 else "Billispor"
-    away = "Billispor" if home == "Prospor" else "Prospor"
+    home = "Prospor" if w%2==0 else "Billispor"
+    away = "Billispor" if home=="Prospor" else "Prospor"
 
     st.write(home,"vs",away)
 
     c1,c2 = st.columns(2)
-
-    home_score = c1.number_input(home,0,100)
-    away_score = c2.number_input(away,0,100)
+    hs = c1.number_input(home,0,200)
+    as_ = c2.number_input(away,0,200)
 
     if st.form_submit_button("Kaydet"):
 
-        st.session_state.matches[week] = {
-            "Ev":home,
-            "EvSkor":home_score,
-            "Dep":away,
-            "DepSkor":away_score
+        st.session_state.matches[w] = {
+            "Ev":home,"EvSkor":hs,
+            "Dep":away,"DepSkor":as_
         }
 
-        st.success("Skor kaydedildi")
+        if hs>0 or as_>0:
+            st.balloons()
+            st.success("⚽ GOALLL!")
 
-# PUAN HESAPLAMA
-def get_table():
+# TABLO
+def table():
 
     stats = {
-        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18,"Logo":"billispor.jpg"},
-        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":154,"YG":150,"P":12,"Logo":"prospor.jpg"}
+        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18},
+        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":154,"YG":150,"P":12}
     }
 
-    for w,m in st.session_state.matches.items():
+    for m in st.session_state.matches.values():
 
-        stats[m["Ev"]]["O"] +=1
-        stats[m["Dep"]]["O"] +=1
+        stats[m["Ev"]]["O"]+=1
+        stats[m["Dep"]]["O"]+=1
 
-        stats[m["Ev"]]["AG"] += m["EvSkor"]
-        stats[m["Ev"]]["YG"] += m["DepSkor"]
+        stats[m["Ev"]]["AG"]+=m["EvSkor"]
+        stats[m["Ev"]]["YG"]+=m["DepSkor"]
 
-        stats[m["Dep"]]["AG"] += m["DepSkor"]
-        stats[m["Dep"]]["YG"] += m["EvSkor"]
+        stats[m["Dep"]]["AG"]+=m["DepSkor"]
+        stats[m["Dep"]]["YG"]+=m["EvSkor"]
 
-        if m["EvSkor"] > m["DepSkor"]:
-            stats[m["Ev"]]["G"]+=1
+        if m["EvSkor"]>m["DepSkor"]:
             stats[m["Ev"]]["P"]+=3
-            stats[m["Dep"]]["M"]+=1
-
-        elif m["EvSkor"] < m["DepSkor"]:
-            stats[m["Dep"]]["G"]+=1
+        elif m["EvSkor"]<m["DepSkor"]:
             stats[m["Dep"]]["P"]+=3
-            stats[m["Ev"]]["M"]+=1
 
-        else:
-            stats[m["Ev"]]["B"]+=1
-            stats[m["Dep"]]["B"]+=1
-            stats[m["Ev"]]["P"]+=1
-            stats[m["Dep"]]["P"]+=1
+    df = pd.DataFrame(stats).T
+    df["Av"]=df["AG"]-df["YG"]
 
-    df = pd.DataFrame.from_dict(stats,orient="index").reset_index()
-
-    df.columns = ["Takım","O","G","B","M","AG","YG","P","Logo"]
-
-    df["Av"] = df["AG"] - df["YG"]
-
-    return df.sort_values(by=["P","Av"],ascending=False)
+    return df.sort_values(["P","Av"],ascending=False)
 
 # TABLAR
-tab1,tab2 = st.tabs(["📊 PUAN DURUMU","📅 FİKSTÜR"])
+tab1,tab2,tab3 = st.tabs(["📊 Puan","📅 Fikstür","📈 Grafik"])
 
-# PUAN DURUMU
+# PUAN
 with tab1:
 
-    df = get_table()
+    df = table().reset_index()
+    df.columns=["Takım","O","G","B","M","AG","YG","P","Av"]
+
+    df.index+=1
+
+    medals=["🥇","🥈","🥉"]
 
     for i,row in df.iterrows():
 
-        leader = "leader" if i == 0 else ""
+        medal = medals[i-1] if i<=3 else i
+        leader = "leader" if i==1 else ""
 
         st.markdown(f"""
-        <div class="team-card {leader}">
-
-        <img src="file/{row['Logo']}" width="70">
-
-        <div style="flex-grow:1">
-
-        <h3>{row['Takım']}</h3>
-
-        <span>{row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M</span>
-
-        </div>
-
-        <div style="text-align:right">
-
-        <div class="points">{row['P']}</div>
-
-        <div>Averaj {row['Av']}</div>
-
-        </div>
-
+        <div class="card {leader}">
+        <div>{medal} {row['Takım']}</div>
+        <div>{row['P']} Puan</div>
         </div>
         """, unsafe_allow_html=True)
 
-    st.table(df[["Takım","O","G","B","M","AG","YG","Av","P"]])
+    st.dataframe(df)
 
 # FİKSTÜR
 with tab2:
@@ -212,49 +160,27 @@ with tab2:
     for i in range(10):
 
         w = 11+i
-
         date = start + datetime.timedelta(days=7*i)
 
-        home = "Prospor" if w % 2 == 0 else "Billispor"
-        away = "Billispor" if home == "Prospor" else "Prospor"
+        home = "Prospor" if w%2==0 else "Billispor"
+        away = "Billispor" if home=="Prospor" else "Prospor"
 
-        score = "vs"
-        status = "Bekleniyor"
+        score="vs"
 
         if w in st.session_state.matches:
-
             m = st.session_state.matches[w]
-
-            score = f'<span class="score">{m["EvSkor"]} - {m["DepSkor"]}</span>'
-
-            status = "Tamamlandı"
+            score=f'<span class="goal">{m["EvSkor"]}-{m["DepSkor"]}</span>'
 
         st.markdown(f"""
-        <div class="match-card">
-
-        <div style="display:flex;justify-content:space-between">
-
-        <div>
-
-        <b>{w}. Hafta</b><br>
-
-        <small>{date.strftime('%d.%m.%Y')}</small>
-
-        </div>
-
-        <div>
-
+        <div class="card">
+        {w}. Hafta | {date}<br>
         {home} {score} {away}
-
-        </div>
-
-        <div>
-
-        {status}
-
-        </div>
-
-        </div>
-
         </div>
         """, unsafe_allow_html=True)
+
+# GRAFİK
+with tab3:
+
+    df = table()
+
+    st.line_chart(df["P"])
