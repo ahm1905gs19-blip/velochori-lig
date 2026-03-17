@@ -5,12 +5,12 @@ import datetime
 # SAYFA AYARI
 st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
 
-# CSS TASARIM (Tüm yapı korunup fikstür modernize edildi)
+# CSS TASARIM (Tüm yapı korunup detaylar rafine edildi)
 st.markdown("""
 <style>
 .stApp { background: #ffffff; }
 
-/* O GÖSTERİŞLİ BAŞLIK */
+/* O GÖSTERİŞLİ BAŞLIK - DOKUNULMADI */
 .league-title {
     font-size: 60px;
     font-weight: 900;
@@ -30,7 +30,7 @@ st.markdown("""
     to { background-position: 200% center; }
 }
 
-/* TAKIM KARTI */
+/* TAKIM KARTI - KORUNDU */
 .team-card {
     display: flex;
     justify-content: space-between;
@@ -69,7 +69,7 @@ st.markdown("""
     border-radius: 8px;
 }
 
-/* YENİ MODERN FİKSTÜR TASARIMI */
+/* MODERN FİKSTÜR - GELİŞTİRİLDİ */
 .modern-fixture {
     background: #ffffff;
     border: 1px solid #f1f5f9;
@@ -80,20 +80,6 @@ st.markdown("""
     justify-content: space-between;
     align-items: center;
     box-shadow: 0 2px 15px rgba(0,0,0,0.04);
-    transition: transform 0.2s;
-}
-
-.modern-fixture:hover {
-    transform: translateY(-2px);
-    border-color: #16a34a;
-}
-
-.fixture-date {
-    font-size: 0.85rem;
-    color: #94a3b8;
-    border-right: 2px solid #f1f5f9;
-    padding-right: 20px;
-    min-width: 100px;
 }
 
 .fixture-teams {
@@ -119,16 +105,10 @@ st.markdown("""
     border: 1px solid #e2e8f0;
 }
 
-.status-badge {
-    padding: 5px 12px;
-    border-radius: 20px;
-    font-size: 0.75rem;
-    font-weight: 600;
+/* FORM NOKTALARI (Küçük Detay) */
+.form-dot {
+    height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;
 }
-
-.status-waiting { background: #fef9c3; color: #854d0e; }
-.status-done { background: #dcfce7; color: #166534; }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -139,15 +119,22 @@ if 'matches' not in st.session_state:
     st.session_state.matches = {}
 
 # SIDEBAR
-st.sidebar.header("🕹️ Yönetici Paneli")
-with st.sidebar.form("score_form"):
-    week_input = st.number_input("Hafta", min_value=11, max_value=20, value=11)
-    is_even = week_input % 2 == 0
-    h_team, a_team = ("Prospor", "Billispor") if is_even else ("Billispor", "Prospor")
-    h_score = st.number_input(f"{h_team}", min_value=0, step=1)
-    a_score = st.number_input(f"{a_team}", min_value=0, step=1)
-    if st.form_submit_button("Skoru Kaydet"):
-        st.session_state.matches[week_input] = {"Ev": h_team, "EvSkor": h_score, "Dep": a_team, "DepSkor": a_score}
+with st.sidebar:
+    st.header("🕹️ Yönetici Paneli")
+    with st.form("score_form"):
+        week_input = st.number_input("Hafta", min_value=11, max_value=20, value=11)
+        is_even = week_input % 2 == 0
+        h_team, a_team = ("Prospor", "Billispor") if is_even else ("Billispor", "Prospor")
+        st.info(f"Maç: {h_team} vs {a_team}")
+        h_score = st.number_input(f"{h_team} Skoru", min_value=0, step=1)
+        a_score = st.number_input(f"{a_team} Skoru", min_value=0, step=1)
+        if st.form_submit_button("Skoru Kaydet"):
+            st.session_state.matches[week_input] = {"Ev": h_team, "EvSkor": h_score, "Dep": a_team, "DepSkor": a_score}
+            st.rerun()
+
+    if st.button("Verileri Sıfırla", use_container_width=True):
+        st.session_state.matches = {}
+        st.rerun()
 
 # HESAPLAMA MOTORU
 def get_standings():
@@ -172,10 +159,19 @@ def get_standings():
     return df.sort_values(by=["P", "Av"], ascending=[False, False])
 
 # SEKMELER
-tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "📅 FİKSTÜR"])
+tab1, tab2 = st.tabs(["📊 GENEL DURUM", "📅 MAÇ TAKVİMİ"])
 
 with tab1:
     df = get_standings()
+    
+    # Üst Bilgi Kartları (Yeni Geliştirme)
+    c1, c2, c3 = st.columns(3)
+    c1.metric("Toplam Maç", f"{df['O'].sum() // 2}")
+    c2.metric("Toplam Gol", f"{df['AG'].sum()}")
+    c3.metric("Lider", f"{df.iloc[0]['Takım']}")
+
+    st.write("") # Boşluk
+    
     for i, row in df.iterrows():
         l_class = "leader" if i == 0 else ""
         st.markdown(f"""
@@ -191,11 +187,13 @@ with tab1:
         </div>
         """, unsafe_allow_html=True)
     
-    st.write("### Detaylı Puan Durumu")
+    st.write("### 📝 Detaylı İstatistikler")
     st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
 
 with tab2:
     start_date = datetime.date(2026, 3, 22)
+    st.info("💡 Not: Skorlar girildikçe puan durumu otomatik olarak güncellenir.")
+    
     for i in range(10):
         w = 11 + i
         date = start_date + datetime.timedelta(days=7*i)
@@ -205,25 +203,25 @@ with tab2:
         is_done = w in st.session_state.matches
         if is_done:
             m = st.session_state.matches[w]
-            score_html = f"<span style='color:#16a34a; font-size:1.4rem;'>{m['EvSkor']} - {m['DepSkor']}</span>"
-            status_html = '<span class="status-badge status-done">Tamamlandı</span>'
+            score_display = f"<span style='color:#16a34a; font-size:1.5rem;'>{m['EvSkor']} - {m['DepSkor']}</span>"
+            status = '<span style="color:#16a34a; font-size:0.8rem;">● BİTTİ</span>'
         else:
-            score_html = '<div class="vs-circle">VS</div>'
-            status_html = '<span class="status-badge status-waiting">Bekleniyor</span>'
+            score_display = '<div class="vs-circle">VS</div>'
+            status = '<span style="color:#94a3b8; font-size:0.8rem;">○ BEKLENİYOR</span>'
 
         st.markdown(f"""
         <div class="modern-fixture">
-            <div class="fixture-date">
-                <b>{w}. HAFTA</b><br>
-                {date.strftime('%d.%m.%Y')}
+            <div style="min-width:100px; border-right: 1px solid #f1f5f9;">
+                <b style="color:#16a34a;">{w}. HAFTA</b><br>
+                <small style="color:#94a3b8;">{date.strftime('%d.%m.%Y')}</small>
             </div>
             <div class="fixture-teams">
-                <span style="color:#1e293b;">{h.upper()}</span>
-                {score_html}
-                <span style="color:#1e293b;">{a.upper()}</span>
+                <span>{h.upper()}</span>
+                {score_display}
+                <span>{a.upper()}</span>
             </div>
-            <div style="min-width: 100px; text-align: right;">
-                {status_html}
+            <div style="min-width:100px; text-align:right;">
+                {status}
             </div>
         </div>
         """, unsafe_allow_html=True)
