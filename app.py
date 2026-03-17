@@ -5,18 +5,17 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Pro Lig", page_icon="⚽", layout="wide")
 
-# --- GELİŞMİŞ CSS TASARIMI ---
+# --- GELİŞMİŞ CSS ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 .stApp { background: #f8fafc; font-family: 'Inter', sans-serif; }
 
-/* EFSANE BAŞLIK */
 .league-title {
     font-size: clamp(30px, 7vw, 60px);
     font-weight: 900;
     text-align: center;
-    padding: 30px 0;
+    padding: 25px 0;
     background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
     background-size: 200% auto;
     -webkit-background-clip: text;
@@ -25,48 +24,46 @@ st.markdown("""
 }
 @keyframes shine { to { background-position: 200% center; } }
 
-/* MODERN TAKIM KARTI */
+/* SIRALAMA KARTLARI */
 .team-card {
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
-    background: white;
-    padding: 20px 25px;
-    border-radius: 20px;
-    margin-bottom: 15px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-    flex-wrap: wrap;
-    gap: 15px;
-    transition: transform 0.2s;
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; padding: 20px; border-radius: 20px;
+    margin-bottom: 15px; border: 1px solid #e2e8f0;
+    flex-wrap: wrap; gap: 15px;
 }
-.team-card:hover { transform: translateY(-2px); border-color: #10b981; }
 .leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
 
-.rank-badge { background: #f1f5f9; color: #64748b; padding: 2px 10px; border-radius: 8px; font-size: 11px; font-weight: 900; }
-.leader-badge { background: #fbbf24; color: #92400e; }
-
-.points-text { font-size: clamp(32px, 5vw, 42px); font-weight: 900; color: #059669; line-height: 1; }
-
-/* FORM İKONLARI */
-.form-box { display: flex; gap: 5px; margin-top: 8px; }
 .f-dot {
     width: 24px; height: 24px; border-radius: 6px;
     display: flex; align-items: center; justify-content: center;
-    font-size: 11px; font-weight: 900; color: white;
+    font-size: 11px; font-weight: 900; color: white; margin-right: 4px;
 }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
-/* FİKSTÜR ROW */
-.f-row {
-    background: white; border-radius: 12px; padding: 12px 20px;
-    margin-bottom: 8px; display: flex; align-items: center;
-    justify-content: space-between; border: 1px solid #f1f5f9;
-    flex-wrap: wrap; gap: 10px;
+/* MODERN DETAYLI TABLO */
+.custom-table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 15px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
-.f-score {
-    background: #1e293b; color: white; padding: 5px 15px;
-    border-radius: 10px; font-weight: 900; min-width: 70px; text-align: center;
+.custom-table th { background: #1e293b; color: white; padding: 12px; font-size: 12px; text-align: center; }
+.custom-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 14px; }
+.custom-table tr:hover { background: #f8fafc; }
+.col-p { color: #10b981; font-weight: 900; font-size: 16px; }
+
+/* GELİŞMİŞ FİKSTÜR */
+.match-card {
+    background: white; border-radius: 15px; padding: 15px 20px;
+    margin-bottom: 10px; display: flex; align-items: center;
+    justify-content: space-between; border-left: 5px solid #e2e8f0;
+    transition: all 0.3s;
+}
+.match-card:hover { border-left-color: #10b981; transform: translateX(5px); }
+.match-done { border-left-color: #10b981; background: #f0fdf4; }
+
+.score-box {
+    background: #1e293b; color: white; padding: 6px 16px;
+    border-radius: 8px; font-weight: 900; font-size: 1.2rem;
+    min-width: 80px; text-align: center; box-shadow: 0 4px 10px rgba(0,0,0,0.1);
 }
 </style>
 """, unsafe_allow_html=True)
@@ -76,7 +73,8 @@ st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', 
 # --- VERİ VE HESAPLAMA ---
 if 'matches' not in st.session_state: st.session_state.matches = {}
 
-def update_stats():
+def get_live_stats():
+    # Başlangıç verileri
     data = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
         "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
@@ -102,74 +100,81 @@ def update_stats():
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("### 📥 SKOR MERKEZİ")
-    with st.form("match_input"):
-        hafta = st.number_input("Hafta", 11, 20, 11)
-        ev, dep = ("Prospor", "Billispor") if hafta % 2 == 0 else ("Billispor", "Prospor")
-        st.caption(f"Maç: {ev} vs {dep}")
+    st.markdown("### 📥 SKOR GİRİŞİ")
+    with st.form("sc_in"):
+        h = st.number_input("Hafta", 11, 20, 11)
+        ev, dep = ("Prospor", "Billispor") if h % 2 == 0 else ("Billispor", "Prospor")
         c1, c2 = st.columns(2)
         s1 = c1.number_input(f"{ev}", 0, 100, 0)
         s2 = c2.number_input(f"{dep}", 0, 100, 0)
-        if st.form_submit_button("ONAYLA"):
-            st.session_state.matches[hafta] = {"Ev": ev, "EvSkor": s1, "Dep": dep, "DepSkor": s2}
+        if st.form_submit_button("KAYDET"):
+            st.session_state.matches[h] = {"Ev": ev, "EvSkor": s1, "Dep": dep, "DepSkor": s2}
             st.rerun()
-    if st.button("Sıfırla"): st.session_state.matches = {}; st.rerun()
 
-# --- ANA EKRAN ---
-tab1, tab2 = st.tabs(["📊 SIRALAMA", "🗓️ FİKSTÜR"])
+# --- SEKMELER ---
+t1, t2 = st.tabs(["📊 CANLI SIRALAMA", "🗓️ MAÇ MERKEZİ"])
 
-with tab1:
-    df = update_stats()
-    for idx, row in df.reset_index(drop=True).iterrows():
-        is_leader = idx == 0
-        card_class = "team-card leader-card" if is_leader else "team-card"
-        badge_text = "LİDER 👑" if is_leader else f"RANK {idx+1}"
-        badge_class = "rank-badge leader-badge" if is_leader else "rank-badge"
-        
-        form_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in row["form"][-5:]])
-        
+with t1:
+    df = get_live_stats()
+    for idx, r in df.reset_index(drop=True).iterrows():
+        is_l = idx == 0
+        f_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
         st.markdown(f"""
-        <div class="{card_class}">
-            <div style="flex:1; min-width:180px;">
-                <span class="{badge_class}">{badge_text}</span>
-                <h2 style="margin:5px 0; color:#1e293b;">{row['Takım'].upper()}</h2>
-                <div class="form-box">{form_html}</div>
+        <div class="team-card {'leader-card' if is_l else ''}">
+            <div style="flex:1; min-width:200px;">
+                <span style="background:{'#fbbf24' if is_l else '#f1f5f9'}; padding:2px 8px; border-radius:5px; font-size:10px; font-weight:900;">{ 'LİDER 👑' if is_l else f'RANK {idx+1}'}</span>
+                <h2 style="margin:5px 0; color:#1e293b;">{r['Takım'].upper()}</h2>
+                <div style="display:flex;">{f_html}</div>
             </div>
-            <div style="display:flex; align-items:center; gap:25px;">
+            <div style="display:flex; align-items:center; gap:30px;">
                 <div style="text-align:right;">
-                    <div style="font-weight:800; color:#64748b; font-size:13px;">AVERAGE: {row['Av']}</div>
-                    <div style="font-size:11px; color:#94a3b8;">{row['AG']} AG / {row['YG']} YG</div>
+                    <div style="font-weight:800; color:#64748b; font-size:13px;">AVERAGE: {r['Av']}</div>
+                    <div style="font-size:11px; color:#94a3b8;">{r['AG']} AG / {r['YG']} YG</div>
                 </div>
-                <div class="points-text">{row['P']}<small style="font-size:12px; color:#94a3b8; margin-left:4px;">PTS</small></div>
+                <div style="font-size:40px; font-weight:900; color:#10b981;">{r['P']}<small style="font-size:12px; color:#94a3b8; margin-left:4px;">PTS</small></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    st.write("### 📝 Detaylı Tablo")
-    st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
+    st.write("### 📝 DETAYLI PERFORMANS TABLOSU")
+    # HTML Tablo ile 0-1 indekslerinden kurtulup tasarımı uçuruyoruz
+    table_html = f"""
+    <table class="custom-table">
+        <thead>
+            <tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>PUAN</th></tr>
+        </thead>
+        <tbody>
+            {"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td class='col-p'>{row['P']}</td></tr>" for _, row in df.iterrows()])}
+        </tbody>
+    </table>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
 
-with tab2:
-    start_date = datetime.date(2026, 3, 22)
+with t2:
+    s_dt = datetime.date(2026, 3, 22)
     for i in range(10):
         w = 11 + i
-        curr_date = start_date + datetime.timedelta(days=7*i)
+        m_dt = s_dt + datetime.timedelta(days=7*i)
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
-        match = st.session_state.matches.get(w)
+        res = st.session_state.matches.get(w)
         
-        score_html = f'<div class="f-score">{match["EvSkor"]} - {match["DepSkor"]}</div>' if match else '<div style="color:#cbd5e1; font-weight:900; letter-spacing:2px;">VS</div>'
-        status = f'<span style="color:#10b981; font-size:11px; font-weight:700;">✓ BİTTİ</span>' if match else '<span style="color:#94a3b8; font-size:11px;">⌚ BEKLİYOR</span>'
-        
+        card_cls = "match-card match-done" if res else "match-card"
+        score = f'<div class="score-box">{res["EvSkor"]} - {res["DepSkor"]}</div>' if res else '<div style="font-weight:900; color:#cbd5e1;">VS</div>'
         st.markdown(f"""
-        <div class="f-row">
-            <div style="width:90px;">
-                <b style="color:#059669; font-size:13px;">{w}. HAFTA</b><br>
-                <small style="color:#94a3b8;">{curr_date.strftime('%d.%m')}</small>
+        <div class="{card_cls}">
+            <div style="width:100px;">
+                <b style="color:#10b981; font-size:14px;">{w}. HAFTA</b><br>
+                <small style="color:#94a3b8;">{m_dt.strftime('%d.%m')}</small>
             </div>
-            <div style="flex:1; display:flex; justify-content:center; align-items:center; gap:20px;">
-                <span style="font-weight:700; color:#1e293b; width:100px; text-align:right;">{ev_t}</span>
-                {score_html}
-                <span style="font-weight:700; color:#1e293b; width:100px; text-align:left;">{dep_t}</span>
+            <div style="flex:1; display:flex; justify-content:center; align-items:center; gap:25px; font-weight:700;">
+                <span style="text-align:right; width:100px;">{ev_t}</span>
+                {score}
+                <span style="text-align:left; width:100px;">{dep_t}</span>
             </div>
-            <div style="width:80px; text-align:right;">{status}</div>
+            <div style="width:100px; text-align:right;">
+                <span style="color:{'#10b981' if res else '#94a3b8'}; font-size:11px; font-weight:800;">
+                    {'● OYNANDI' if res else '○ BEKLİYOR'}
+                </span>
+            </div>
         </div>
         """, unsafe_allow_html=True)
