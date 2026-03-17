@@ -5,14 +5,14 @@ import datetime
 # SAYFA AYARI
 st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
 
-# CSS TASARIM (Tüm yapı korunup detaylar rafine edildi)
+# CSS TASARIM (Tüm yapı korunup detaylar zirveye taşındı)
 st.markdown("""
 <style>
 .stApp { background: #ffffff; }
 
-/* O GÖSTERİŞLİ BAŞLIK - DOKUNULMADI */
+/* O EFSANE BAŞLIK - DOKUNULMADI */
 .league-title {
-    font-size: 60px;
+    font-size: 65px;
     font-weight: 900;
     text-align: center;
     margin-top: 20px;
@@ -30,84 +30,70 @@ st.markdown("""
     to { background-position: 200% center; }
 }
 
-/* TAKIM KARTI - KORUNDU */
+/* TAKIM KARTI */
 .team-card {
     display: flex;
     justify-content: space-between;
     align-items: center;
     background: white;
     padding: 20px 30px;
-    border-radius: 15px;
-    margin-bottom: 12px;
-    border: 1px solid #e2e8f0;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
+    border-radius: 18px;
+    margin-bottom: 15px;
+    border: 1px solid #f1f5f9;
+    box-shadow: 0 5px 15px rgba(0,0,0,0.02);
+    transition: all 0.3s ease;
 }
+
+.team-card:hover { transform: translateY(-3px); box-shadow: 0 8px 25px rgba(0,0,0,0.08); }
 
 .leader { 
     border: 2px solid #fbbf24; 
-    background: #fffdf2; 
+    background: linear-gradient(90deg, #fffdf2, #ffffff); 
 }
 
-.stats-right {
-    display: flex;
-    gap: 30px;
-    align-items: center;
-}
+.stats-right { display: flex; gap: 30px; align-items: center; }
 
-.points-val {
-    font-size: 35px;
-    font-weight: 900;
-    color: #16a34a;
-}
+.points-val { font-size: 38px; font-weight: 900; color: #16a34a; }
 
 .av-val {
-    font-size: 18px;
-    font-weight: 600;
-    color: #64748b;
-    background: #f1f5f9;
-    padding: 5px 12px;
-    border-radius: 8px;
+    font-size: 16px; font-weight: 700; color: #64748b;
+    background: #f8fafc; padding: 6px 15px; border-radius: 10px; border: 1px solid #e2e8f0;
 }
 
-/* MODERN FİKSTÜR - GELİŞTİRİLDİ */
+/* MODERN FİKSTÜR */
 .modern-fixture {
     background: #ffffff;
     border: 1px solid #f1f5f9;
     border-radius: 20px;
-    padding: 15px 25px;
+    padding: 20px;
     margin-bottom: 15px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 2px 15px rgba(0,0,0,0.04);
+    transition: all 0.3s;
 }
+
+.modern-fixture:hover { background: #f0fdf4; border-color: #bbf7d0; }
 
 .fixture-teams {
-    display: flex;
-    align-items: center;
-    gap: 20px;
-    flex-grow: 1;
-    justify-content: center;
-    font-weight: 700;
-    font-size: 1.1rem;
+    display: flex; align-items: center; gap: 25px; flex-grow: 1;
+    justify-content: center; font-weight: 800; font-size: 1.2rem;
 }
 
-.vs-circle {
-    background: #f8fafc;
-    width: 40px;
-    height: 40px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    border-radius: 50%;
-    font-size: 0.7rem;
-    color: #16a34a;
-    border: 1px solid #e2e8f0;
+.vs-badge {
+    background: #16a34a; color: white; padding: 4px 12px;
+    border-radius: 8px; font-size: 0.7rem; font-weight: 900;
 }
 
-/* FORM NOKTALARI (Küçük Detay) */
-.form-dot {
-    height: 10px; width: 10px; border-radius: 50%; display: inline-block; margin-left: 5px;
+.score-box {
+    font-size: 1.8rem; font-weight: 900; color: #16a34a;
+    min-width: 100px; text-align: center;
+}
+
+/* ANALİZ KUTUSU */
+.analysis-card {
+    background: #1e293b; color: white; padding: 20px;
+    border-radius: 15px; margin-top: 20px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -118,25 +104,27 @@ st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', 
 if 'matches' not in st.session_state:
     st.session_state.matches = {}
 
-# SIDEBAR
+# SIDEBAR (YÖNETİCİ PANELİ)
 with st.sidebar:
-    st.header("🕹️ Yönetici Paneli")
+    st.image("https://cdn-icons-png.flaticon.com/512/824/824726.png", width=100)
+    st.title("Admin Paneli")
     with st.form("score_form"):
-        week_input = st.number_input("Hafta", min_value=11, max_value=20, value=11)
+        week_input = st.number_input("Hafta Seç", min_value=11, max_value=20, value=11)
         is_even = week_input % 2 == 0
         h_team, a_team = ("Prospor", "Billispor") if is_even else ("Billispor", "Prospor")
-        st.info(f"Maç: {h_team} vs {a_team}")
-        h_score = st.number_input(f"{h_team} Skoru", min_value=0, step=1)
-        a_score = st.number_input(f"{a_team} Skoru", min_value=0, step=1)
-        if st.form_submit_button("Skoru Kaydet"):
+        st.divider()
+        st.subheader(f"{h_team} - {a_team}")
+        h_score = st.number_input("Ev Sahibi", min_value=0, step=1)
+        a_score = st.number_input("Deplasman", min_value=0, step=1)
+        if st.form_submit_button("⚽ SKORU KAYDET"):
             st.session_state.matches[week_input] = {"Ev": h_team, "EvSkor": h_score, "Dep": a_team, "DepSkor": a_score}
             st.rerun()
-
-    if st.button("Verileri Sıfırla", use_container_width=True):
+    
+    if st.button("🗑️ Verileri Temizle"):
         st.session_state.matches = {}
         st.rerun()
 
-# HESAPLAMA MOTORU
+# HESAPLAMA MOTORU (Goller: 150-154 Sabitlendi)
 def get_standings():
     stats = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18},
@@ -159,40 +147,40 @@ def get_standings():
     return df.sort_values(by=["P", "Av"], ascending=[False, False])
 
 # SEKMELER
-tab1, tab2 = st.tabs(["📊 GENEL DURUM", "📅 MAÇ TAKVİMİ"])
+tab1, tab2, tab3 = st.tabs(["📊 CANLI PUAN DURUMU", "📅 FİKSTÜR & SONUÇLAR", "🔮 LİG ANALİZİ"])
 
 with tab1:
     df = get_standings()
     
-    # Üst Bilgi Kartları (Yeni Geliştirme)
-    c1, c2, c3 = st.columns(3)
-    c1.metric("Toplam Maç", f"{df['O'].sum() // 2}")
-    c2.metric("Toplam Gol", f"{df['AG'].sum()}")
+    # Canlı Özet Kartları
+    c1, c2, c3, c4 = st.columns(4)
+    c1.metric("Maç Sayısı", f"{df['O'].sum() // 2}")
+    c2.metric("Gol Sayısı", f"{df['AG'].sum()}")
     c3.metric("Lider", f"{df.iloc[0]['Takım']}")
+    c4.metric("Kalan Hafta", f"{20 - (10 + len(st.session_state.matches))}")
 
-    st.write("") # Boşluk
+    st.write("---")
     
     for i, row in df.iterrows():
         l_class = "leader" if i == 0 else ""
         st.markdown(f"""
         <div class="team-card {l_class}">
             <div>
-                <b style="font-size:22px;">{i+1}. {row['Takım'].upper()}</b><br>
-                <small style="color:#64748b;">{row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M</small>
+                <b style="font-size:24px; color:#1e293b;">{i+1}. {row['Takım'].upper()}</b><br>
+                <span style="color:#94a3b8; font-weight:600;">{row['G']} Galibiyet • {row['B']} Beraberlik • {row['M']} Mağlubiyet</span>
             </div>
             <div class="stats-right">
-                <span class="av-val">AV: {row['Av']}</span>
-                <span class="points-val">{row['P']} <small style="font-size:14px;">PTS</small></span>
+                <div class="av-val">AVERAGE: {row['Av']}</div>
+                <div class="points-val">{row['P']} <small style="font-size:14px; color:#94a3b8;">PTS</small></div>
             </div>
         </div>
         """, unsafe_allow_html=True)
     
-    st.write("### 📝 Detaylı İstatistikler")
-    st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
+    with st.expander("🔍 Tüm Detayları Gör"):
+        st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
 
 with tab2:
     start_date = datetime.date(2026, 3, 22)
-    st.info("💡 Not: Skorlar girildikçe puan durumu otomatik olarak güncellenir.")
     
     for i in range(10):
         w = 11 + i
@@ -203,25 +191,40 @@ with tab2:
         is_done = w in st.session_state.matches
         if is_done:
             m = st.session_state.matches[w]
-            score_display = f"<span style='color:#16a34a; font-size:1.5rem;'>{m['EvSkor']} - {m['DepSkor']}</span>"
-            status = '<span style="color:#16a34a; font-size:0.8rem;">● BİTTİ</span>'
+            score_content = f"<div class='score-box'>{m['EvSkor']} - {m['DepSkor']}</div>"
+            status = '<span style="color:#16a34a; font-weight:800;">● BİTTİ</span>'
         else:
-            score_display = '<div class="vs-circle">VS</div>'
-            status = '<span style="color:#94a3b8; font-size:0.8rem;">○ BEKLENİYOR</span>'
+            score_content = '<div class="vs-badge">HENÜZ OYNANMADI</div>'
+            status = '<span style="color:#94a3b8;">○ BEKLEMEDE</span>'
 
         st.markdown(f"""
         <div class="modern-fixture">
-            <div style="min-width:100px; border-right: 1px solid #f1f5f9;">
-                <b style="color:#16a34a;">{w}. HAFTA</b><br>
-                <small style="color:#94a3b8;">{date.strftime('%d.%m.%Y')}</small>
+            <div style="min-width:120px;">
+                <span style="color:#16a34a; font-weight:900;">{w}. HAFTA</span><br>
+                <small style="color:#94a3b8;">{date.strftime('%d %B %Y')}</small>
             </div>
             <div class="fixture-teams">
                 <span>{h.upper()}</span>
-                {score_display}
+                {score_content}
                 <span>{a.upper()}</span>
             </div>
-            <div style="min-width:100px; text-align:right;">
+            <div style="min-width:120px; text-align:right;">
                 {status}
             </div>
         </div>
         """, unsafe_allow_html=True)
+
+with tab3:
+    df = get_standings()
+    lider = df.iloc[0]['Takım']
+    st.markdown(f"""
+    <div class="analysis-card">
+        <h3>🚀 Şampiyonluk Analizi</h3>
+        <p>Mevcut verilere göre <b>{lider}</b> şampiyonluk yolunda avantajlı görünüyor.</p>
+        <hr>
+        <p>💡 <i>Not: Matematiksel olarak ligin bitmesine daha zaman var. Her maç dengeleri değiştirebilir!</i></p>
+    </div>
+    """, unsafe_allow_html=True)
+    
+    st.subheader("📊 Performans Grafiği")
+    st.bar_chart(df.set_index("Takım")["P"])
