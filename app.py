@@ -11,13 +11,6 @@ st.markdown("""
     background: linear-gradient(135deg,#eef2ff,#f8fafc);
 }
 
-.title {
-    text-align:center;
-    font-size:45px;
-    font-weight:900;
-    margin-bottom:20px;
-}
-
 .card {
     background:white;
     padding:15px;
@@ -33,7 +26,7 @@ st.markdown("""
 
 .leader {
     border:2px solid gold;
-    box-shadow:0 0 20px gold;
+    box-shadow:0 0 15px gold;
 }
 
 .goal {
@@ -50,7 +43,7 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="title">🏆 VELOCHORI SUPER LEAGUE</div>', unsafe_allow_html=True)
+st.title("🏆 VELOCHORI SUPER LEAGUE")
 
 # SESSION
 if "matches" not in st.session_state:
@@ -61,14 +54,14 @@ if st.sidebar.button("🔄 Sıfırla"):
     st.session_state.matches = {}
     st.rerun()
 
-# SKOR GİR
+# SKOR
 st.sidebar.header("⚽ Skor Gir")
 
 with st.sidebar.form("form"):
     w = st.number_input("Hafta",11,20,11)
 
-    home = "Prospor" if w % 2 == 0 else "Billispor"
-    away = "Billispor" if home == "Prospor" else "Prospor"
+    home = "Prospor" if w%2==0 else "Billispor"
+    away = "Billispor" if home=="Prospor" else "Prospor"
 
     st.write(home,"vs",away)
 
@@ -130,34 +123,38 @@ with tab1:
         medal = ["🥇","🥈","🥉"][i-1] if i<=3 else str(i)
         leader = "leader" if i==1 else ""
 
-        col1, col2, col3 = st.columns([1,5,2])
+        st.markdown(f"""
+        <div class="card {leader}" style="
+            display:flex;
+            align-items:center;
+            justify-content:space-between;
+        ">
 
-        with col1:
-            st.image(row["Logo"], width=55)
-
-        with col2:
-            st.markdown(f"""
-            <div class="card {leader}">
-                <div style="font-size:20px; font-weight:800;">
-                    {medal} {row['Takım']}
-                </div>
-                <div style="color:gray;">
-                    {row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M
+            <!-- SOL -->
+            <div style="display:flex; align-items:center; gap:15px;">
+                <img src="{row['Logo']}" width="55">
+                <div>
+                    <div style="font-size:20px; font-weight:800;">
+                        {medal} {row['Takım']}
+                    </div>
+                    <div style="color:gray; font-size:13px;">
+                        {row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M
+                    </div>
                 </div>
             </div>
-            """, unsafe_allow_html=True)
 
-        with col3:
-            st.markdown(f"""
-            <div class="card {leader}" style="text-align:right;">
-                <div style="font-size:26px; font-weight:900; color:#16a34a;">
+            <!-- SAĞ -->
+            <div style="text-align:right;">
+                <div style="font-size:28px; font-weight:900; color:#16a34a;">
                     {row['P']}
                 </div>
                 <div style="color:gray;">
                     Av {row['Av']}
                 </div>
             </div>
-            """, unsafe_allow_html=True)
+
+        </div>
+        """, unsafe_allow_html=True)
 
     st.dataframe(df)
 
