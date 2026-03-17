@@ -42,7 +42,7 @@ st.markdown("""
 .custom-table th { background: #1e293b; color: white; padding: 12px; font-size: 12px; text-align: center; }
 .custom-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
 
-/* --- ŞAMPİYONLUK ANALİZ KARTI (ÖZEL SEKME İÇİN) --- */
+/* --- ŞAMPİYONLUK ANALİZ KARTI --- */
 .analysis-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-radius: 25px; padding: 40px; color: white; border: 1px solid #334155;
@@ -60,7 +60,7 @@ st.markdown("""
     border-radius: 20px; transition: width 1.5s ease-in-out;
 }
 
-/* --- FİKSTÜR - STADYUM KARTI (GERİ GELDİ) --- */
+/* --- FİKSTÜR - STADYUM KARTI --- */
 .stadium-card {
     background: linear-gradient(145deg, #ffffff, #f8fafc);
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
@@ -160,17 +160,32 @@ with tab1:
 
 with tab2:
     start_date = datetime.date(2026, 3, 22)
+    # Türkçe Ay Sözlüğü
+    aylar = {
+        "January": "Ocak", "February": "Şubat", "March": "Mart", "April": "Nisan",
+        "May": "Mayıs", "June": "Haziran", "July": "Temmuz", "August": "Ağustos",
+        "September": "Eylül", "October": "Ekim", "November": "Kasım", "December": "Aralık"
+    }
+
     for i in range(10):
         w = 11 + i
         m_dt = start_date + datetime.timedelta(days=7*i)
+        
+        # Tarihi Türkçeleştirme
+        gun = m_dt.strftime('%d')
+        ay_ing = m_dt.strftime('%B')
+        yil = m_dt.strftime('%Y')
+        tarih_tr = f"{gun} {aylar[ay_ing]} {yil}"
+
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         res = st.session_state.matches.get(w)
         score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>' if res else '<div style="color:#64748b; font-size:0.8rem; font-weight:900;">VS</div>'
+        
         st.markdown(f"""
         <div class="stadium-card">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
                 <span style="background:#059669; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                <span style="font-size:12px; font-weight:700; color:#94a3b8;">{m_dt.strftime('%d %B %Y')}</span>
+                <span style="font-size:12px; font-weight:700; color:#94a3b8;">{tarih_tr}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
                 <div style="flex:1; text-align:center;"><span class="team-name home-vibe">{ev_t}</span><br><small style="color:#10b981; font-weight:800; font-size:9px;">EV SAHİBİ</small></div>
