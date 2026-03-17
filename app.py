@@ -7,17 +7,13 @@ st.set_page_config(page_title="Velochori Süper Lig", layout="wide")
 # CSS
 st.markdown("""
 <style>
-
 .main{
-background:linear-gradient(rgba(255,255,255,0.9),rgba(255,255,255,0.9)),
-url("https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a");
-background-size:cover;
+background:linear-gradient(135deg,#eef2ff,#f8fafc);
 }
 
-/* başlık */
 .title{
 text-align:center;
-font-size:60px;
+font-size:55px;
 font-weight:900;
 margin-bottom:30px;
 background:linear-gradient(90deg,#16a34a,#4ade80);
@@ -25,38 +21,26 @@ background:linear-gradient(90deg,#16a34a,#4ade80);
 -webkit-text-fill-color:transparent;
 }
 
-/* kart */
 .card{
-display:flex;
-align-items:center;
-justify-content:space-between;
 background:white;
-padding:20px;
+padding:15px;
 border-radius:15px;
-margin-bottom:15px;
-box-shadow:0 8px 20px rgba(0,0,0,0.1);
+margin-bottom:10px;
+box-shadow:0 5px 15px rgba(0,0,0,0.1);
 transition:.3s;
 }
 
 .card:hover{
-transform:scale(1.04);
+transform:scale(1.02);
 }
 
-/* lider */
 .leader{
-border:3px solid gold;
-box-shadow:0 0 25px gold;
+border:2px solid gold;
+box-shadow:0 0 20px gold;
 }
 
-/* logo */
-.logo{
-width:60px;
-border-radius:10px;
-}
-
-/* skor */
 .goal{
-font-size:28px;
+font-size:26px;
 font-weight:900;
 color:#16a34a;
 animation:pulse 1.5s infinite;
@@ -64,10 +48,9 @@ animation:pulse 1.5s infinite;
 
 @keyframes pulse{
 0%{transform:scale(1)}
-50%{transform:scale(1.2)}
+50%{transform:scale(1.15)}
 100%{transform:scale(1)}
 }
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -95,7 +78,6 @@ with st.sidebar.form("form"):
     st.write(home,"vs",away)
 
     c1,c2 = st.columns(2)
-
     hs = c1.number_input(home,0,200)
     as_ = c2.number_input(away,0,200)
 
@@ -108,9 +90,9 @@ with st.sidebar.form("form"):
 
         if hs>0 or as_>0:
             st.balloons()
-            st.success("⚽ GOALLL!")
+            st.success("⚽ GOAL!")
 
-# TABLO FONKSİYON
+# TABLO
 def get_table():
 
     stats = {
@@ -140,7 +122,7 @@ def get_table():
     return df.sort_values(["P","Av"],ascending=False)
 
 # TABS
-tab1,tab2,tab3 = st.tabs(["📊 Puan","📅 Fikstür","📈 Grafik"])
+tab1,tab2,tab3 = st.tabs(["📊 Puan Durumu","📅 Fikstür","📈 Grafik"])
 
 # PUAN
 with tab1:
@@ -157,24 +139,27 @@ with tab1:
         medal = medals[i-1] if i<=3 else i
         leader = "leader" if i==1 else ""
 
-        st.markdown(f"""
-        <div class="card {leader}">
-        
-        <div style="display:flex;align-items:center;gap:15px;">
-        <img src="file/{row['Logo']}" class="logo">
-        <div>
-        <b>{medal} {row['Takım']}</b><br>
-        <small>{row['O']} Maç</small>
-        </div>
-        </div>
+        with st.container():
+            cols = st.columns([1,4,2])
 
-        <div>
-        <b>{row['P']} P</b><br>
-        <small>Av {row['Av']}</small>
-        </div>
+            with cols[0]:
+                st.image(row["Logo"], width=60)
 
-        </div>
-        """, unsafe_allow_html=True)
+            with cols[1]:
+                st.markdown(f"""
+                <div class="card {leader}">
+                <b>{medal} {row['Takım']}</b><br>
+                {row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M
+                </div>
+                """, unsafe_allow_html=True)
+
+            with cols[2]:
+                st.markdown(f"""
+                <div class="card {leader}">
+                <b>{row['P']} P</b><br>
+                Av {row['Av']}
+                </div>
+                """, unsafe_allow_html=True)
 
     st.dataframe(df)
 
@@ -199,7 +184,7 @@ with tab2:
 
         st.markdown(f"""
         <div class="card">
-        {w}. Hafta | {date}<br>
+        <b>{w}. Hafta</b> | {date}<br>
         {home} {score} {away}
         </div>
         """, unsafe_allow_html=True)
