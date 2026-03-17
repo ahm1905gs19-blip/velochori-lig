@@ -1,16 +1,14 @@
 import streamlit as st
 import pandas as pd
 import datetime
-import plotly.express as px
 
 st.set_page_config(page_title="Velochori Süper Lig", layout="wide")
 
 # CSS
 st.markdown("""
 <style>
-body {
+.main {
     background: linear-gradient(135deg,#eef2ff,#f8fafc);
-    font-family: 'Segoe UI', sans-serif;
 }
 
 .title {
@@ -18,7 +16,6 @@ body {
     font-size:45px;
     font-weight:900;
     margin-bottom:20px;
-    color: #1e3a8a;
 }
 
 .card {
@@ -31,18 +28,18 @@ body {
 }
 
 .card:hover {
-    transform:scale(1.03);
+    transform:scale(1.02);
 }
 
 .leader {
-    border:3px solid gold;
-    box-shadow:0 0 25px gold;
+    border:2px solid gold;
+    box-shadow:0 0 20px gold;
 }
 
 .goal {
     font-weight:900;
     color:#16a34a;
-    animation:pulse 1.2s infinite;
+    animation:pulse 1.5s infinite;
 }
 
 @keyframes pulse {
@@ -50,16 +47,6 @@ body {
     50%{transform:scale(1.2)}
     100%{transform:scale(1)}
 }
-
-.confetti {
-    animation: confetti 1.5s ease-in-out;
-}
-
-@keyframes confetti {
-    0% {opacity: 1; transform: translateY(0);}
-    100% {opacity: 0; transform: translateY(-100px);}
-}
-
 </style>
 """, unsafe_allow_html=True)
 
@@ -72,7 +59,7 @@ if "matches" not in st.session_state:
 # RESET
 if st.sidebar.button("🔄 Sıfırla"):
     st.session_state.matches = {}
-    st.experimental_rerun()
+    st.rerun()
 
 # SKOR GİR
 st.sidebar.header("⚽ Skor Gir")
@@ -98,7 +85,7 @@ with st.sidebar.form("form"):
             st.balloons()
             st.success("⚽ GOAL!")
 
-# PUAN TABLOSU
+# TABLO
 def get_table():
     stats = {
         "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18,"Logo":"billispor.png"},
@@ -129,17 +116,20 @@ def get_table():
     return df.sort_values(["P","Av"], ascending=False)
 
 # TABS
-tab1,tab2,tab3,tab4 = st.tabs(["📊 Puan Durumu","📅 Fikstür","📈 Grafik","🏁 Haftalık Lider"])
+tab1,tab2,tab3 = st.tabs(["📊 Puan Durumu","📅 Fikstür","📈 Grafik"])
 
 # PUAN DURUMU
 with tab1:
     df = get_table().reset_index()
     df.columns = ["Takım","O","G","B","M","AG","YG","P","Logo","Av"]
+
     df.index += 1
 
     for i,row in df.iterrows():
+
         medal = ["🥇","🥈","🥉"][i-1] if i<=3 else str(i)
         leader = "leader" if i==1 else ""
+
         col1, col2, col3 = st.columns([1,5,2])
 
         with col1:
@@ -174,15 +164,20 @@ with tab1:
 # FİKSTÜR
 with tab2:
     start = datetime.date(2026,3,22)
+
     for i in range(10):
         w = 11+i
         date = start + datetime.timedelta(days=7*i)
+
         home = "Prospor" if w%2==0 else "Billispor"
         away = "Billispor" if home=="Prospor" else "Prospor"
+
         score = "vs"
+
         if w in st.session_state.matches:
             m = st.session_state.matches[w]
             score = f'<span class="goal">{m["EvSkor"]}-{m["DepSkor"]}</span>'
+
         st.markdown(f"""
         <div class="card">
         <b>{w}. Hafta</b> | {date}<br>
@@ -190,39 +185,7 @@ with tab2:
         </div>
         """, unsafe_allow_html=True)
 
-# PUAN GRAFİK
+# GRAFİK
 with tab3:
-    df_chart = get_table().reset_index()
-    df_chart = df_chart.melt(id_vars=["index"], value_vars=["P"], var_name="Metric", value_name="Puan")
-    fig = px.bar(df_chart, x="index", y="Puan", color="index",
-                 labels={"index":"Takım","Puan":"Puan"}, title="Takım Puanları",
-                 color_discrete_sequence=px.colors.qualitative.Bold)
-    st.plotly_chart(fig, use_container_width=True)
-
-# HAFTALIK LIDER ANİMASYONU
-with tab4:
-    weekly_points = {}
-    for w in range(11,21):
-        weekly_points[w] = {}
-        home = "Prospor" if w %2==0 else "Billispor"
-        away = "Billispor" if home=="Prospor" else "Prospor"
-        hs, as_ = 0,0
-        if w in st.session_state.matches:
-            hs = st.session_state.matches[w]["EvSkor"]
-            as_ = st.session_state.matches[w]["DepSkor"]
-        for team in ["Prospor","Billispor"]:
-            last_points = weekly_points[w-1][team] if w-1 in weekly_points else get_table().loc[team,"P"]
-            weekly_points[w][team] = last_points
-        weekly_points[w][home] += hs>as_ and 3 or hs<as_ and 0 or 1
-        weekly_points[w][away] += as_>hs and 3 or as_<hs and 0 or 1
-
-    df_weekly = pd.DataFrame([
-        {"Hafta": w,"Takım": team,"Puan": p} 
-        for w, teams in weekly_points.items() 
-        for team, p in teams.items()
-    ])
-    fig2 = px.bar(df_weekly, x="Puan", y="Takım", color="Takım",
-                  orientation='h', animation_frame="Hafta",
-                  range_x=[0, df_weekly["Puan"].max()+5],
-                  color_discrete_sequence=px.colors.qualitative.Bold)
-    st.plotly_chart(fig2, use_container_width=True)
+    df = get_table()
+    st.line_chart(df["P"])
