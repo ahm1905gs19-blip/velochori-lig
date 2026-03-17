@@ -26,7 +26,7 @@ st.markdown("""
 
 @keyframes shine { to { background-position: 200% center; } }
 
-/* TAKIM KARTI */
+/* TAKIM KARTI (SIRALAMA SEKMESİ) - KORUNDU */
 .team-card {
     display: flex;
     justify-content: space-between;
@@ -45,7 +45,6 @@ st.markdown("""
 .points-val { font-size: 42px; font-weight: 900; color: #16a34a; line-height: 1; }
 .av-val { font-size: 14px; font-weight: 800; color: #64748b; background: #f1f5f9; padding: 6px 14px; border-radius: 12px; }
 
-/* FORM İKONLARI (SON 5 MAÇ) */
 .form-container { display: flex; gap: 4px; margin-top: 10px; }
 .form-dot {
     width: 26px; height: 26px; border-radius: 8px;
@@ -57,44 +56,61 @@ st.markdown("""
 .loss { background: #ef4444; }
 .draw { background: #94a3b8; }
 
-/* MODERN FİKSTÜR TASARIMI */
+/* MODERN FİKSTÜR TASARIMI - YAZILAR KÜÇÜLTÜLDÜ */
 .modern-fixture {
     background: #ffffff;
     border: 1px solid #f1f5f9;
-    border-radius: 20px;
-    padding: 15px 30px;
-    margin-bottom: 15px;
+    border-radius: 15px;
+    padding: 12px 25px;
+    margin-bottom: 10px;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
+    box-shadow: 0 2px 10px rgba(0,0,0,0.02);
 }
 
 .fixture-teams {
     display: flex;
     align-items: center;
-    gap: 30px;
+    gap: 20px;
     flex-grow: 1;
     justify-content: center;
-    font-weight: 800;
-    font-size: 1.15rem;
+    font-weight: 700;
+    font-size: 1rem; /* Küçültüldü: 1.15 -> 1 */
 }
 
 .vs-circle {
     background: #f8fafc;
-    width: 45px;
-    height: 45px;
+    width: 38px; /* Küçültüldü: 45 -> 38 */
+    height: 38px;
     display: flex;
     align-items: center;
     justify-content: center;
     border-radius: 50%;
-    font-size: 0.75rem;
+    font-size: 0.65rem; /* Küçültüldü: 0.75 -> 0.65 */
     font-weight: 900;
     color: #16a34a;
     border: 1px solid #e2e8f0;
 }
 
-.score-text { font-size: 1.6rem; color: #16a34a; min-width: 90px; text-align: center; }
+.score-text { 
+    font-size: 1.3rem; /* Küçültüldü: 1.6 -> 1.3 */
+    color: #16a34a; 
+    min-width: 70px; 
+    text-align: center;
+    font-weight: 900;
+}
+
+.fixture-date {
+    font-size: 0.85rem;
+    color: #94a3b8;
+}
+
+.fixture-week {
+    color: #16a34a; 
+    font-size: 0.95rem; /* Küçültüldü: 18px -> 0.95rem */
+    font-weight: 800;
+}
 
 </style>
 """, unsafe_allow_html=True)
@@ -124,7 +140,6 @@ with st.sidebar:
 
 # --- HESAPLAMA SİSTEMİ ---
 def get_stats():
-    # Başlangıç verileri (Billispor: M, G sırasıyla son iki maç)
     data = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
         "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
@@ -158,7 +173,6 @@ with t1:
     df = get_stats()
     for i, r in df.iterrows():
         l_css = "leader" if i == 0 else ""
-        # Son 5 maçı alma
         form_html = "".join([f'<div class="form-dot {"win" if x=="G" else "loss" if x=="M" else "draw"}">{x}</div>' for x in r["form"][-5:]])
         
         st.markdown(f"""
@@ -197,17 +211,17 @@ with t2:
         
         st.markdown(f"""
         <div class="modern-fixture">
-            <div style="width:130px; border-right:2px solid #f8fafc;">
-                <b style="color:#16a34a; font-size:18px;">{w}. HAFTA</b><br>
-                <small style="color:#94a3b8;">{dt.strftime('%d.%m.%Y')}</small>
+            <div style="width:110px; border-right:2px solid #f8fafc;">
+                <b class="fixture-week">{w}. HAFTA</b><br>
+                <span class="fixture-date">{dt.strftime('%d.%m.%Y')}</span>
             </div>
             <div class="fixture-teams">
-                <span style="width:140px; text-align:right;">{h_t.upper()}</span>
+                <span style="width:120px; text-align:right;">{h_t.upper()}</span>
                 {score_html}
-                <span style="width:140px; text-align:left;">{a_t.upper()}</span>
+                <span style="width:120px; text-align:left;">{a_t.upper()}</span>
             </div>
-            <div style="width:100px; text-align:right; font-size:0.8rem; font-weight:700;">
-                <span style="color:{'#22c55e' if done else '#cbd5e1'};">{'● TAMAMLANDI' if done else '○ BEKLİYOR'}</span>
+            <div style="width:100px; text-align:right; font-size:0.7rem; font-weight:700;">
+                <span style="color:{'#22c55e' if done else '#cbd5e1'};">{'● BİTTİ' if done else '○ BEKLİYOR'}</span>
             </div>
         </div>
         """, unsafe_allow_html=True)
