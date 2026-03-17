@@ -5,19 +5,29 @@ import datetime
 # SAYFA AYARI
 st.set_page_config(page_title="Velochori Süper Lig", page_icon="⚽", layout="wide")
 
-# CSS TASARIM (Ekran görüntündeki temaya sadık kalınmıştır)
+# CSS TASARIM (Gösterişli Başlık + Açık Tema)
 st.markdown("""
 <style>
 .stApp { background: #ffffff; }
 
-/* BAŞLIK */
+/* O GÖSTERİŞLİ BAŞLIK GERİ GELDİ */
 .league-title {
-    font-size: 38px;
-    font-weight: 800;
+    font-size: 60px;
+    font-weight: 900;
     text-align: center;
-    margin-bottom: 30px;
-    color: #1e293b;
-    font-family: 'Arial', sans-serif;
+    margin-top: 20px;
+    margin-bottom: 40px;
+    font-family: 'Arial Black', sans-serif;
+    background: linear-gradient(90deg, #16a34a, #22c55e, #4ade80, #22c55e, #16a34a);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+    animation: shine 3s linear infinite;
+    text-shadow: 2px 2px 10px rgba(0,0,0,0.05);
+}
+
+@keyframes shine {
+    to { background-position: 200% center; }
 }
 
 /* TAKIM KARTI */
@@ -30,7 +40,7 @@ st.markdown("""
     border-radius: 15px;
     margin-bottom: 12px;
     border: 1px solid #e2e8f0;
-    box-shadow: 0 2px 4px rgba(0,0,0,0.02);
+    box-shadow: 0 4px 10px rgba(0,0,0,0.03);
 }
 
 .leader { 
@@ -45,7 +55,7 @@ st.markdown("""
 }
 
 .points-val {
-    font-size: 32px;
+    font-size: 35px;
     font-weight: 900;
     color: #16a34a;
 }
@@ -54,9 +64,12 @@ st.markdown("""
     font-size: 18px;
     font-weight: 600;
     color: #64748b;
+    background: #f1f5f9;
+    padding: 5px 12px;
+    border-radius: 8px;
 }
 
-/* FİKSTÜR KARTLARI */
+/* FİKSTÜR */
 .match-card {
     background: white;
     padding: 15px 25px;
@@ -66,11 +79,12 @@ st.markdown("""
     display: flex;
     justify-content: space-between;
     align-items: center;
+    border-left: 6px solid #16a34a;
 }
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="league-title">VELOCHORI SUPER LEAGUE</div>', unsafe_allow_html=True)
+st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 
 # VERİ SAKLAMA
 if 'matches' not in st.session_state:
@@ -87,11 +101,11 @@ with st.sidebar.form("score_form"):
     if st.form_submit_button("Skoru Kaydet"):
         st.session_state.matches[week_input] = {"Ev": h_team, "EvSkor": h_score, "Dep": a_team, "DepSkor": a_score}
 
-# HESAPLAMA MOTORU
+# HESAPLAMA MOTORU (İstediğin Goller Girildi)
 def get_standings():
     stats = {
-        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 15, "YG": 19, "P": 18},
-        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 19, "YG": 15, "P": 12}
+        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18},
+        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12}
     }
     for w, m in st.session_state.matches.items():
         stats[m["Ev"]]["O"] += 1; stats[m["Dep"]]["O"] += 1
@@ -107,7 +121,6 @@ def get_standings():
     df = pd.DataFrame.from_dict(stats, orient='index').reset_index()
     df.columns = ["Takım", "O", "G", "B", "M", "AG", "YG", "P"]
     df["Av"] = df["AG"] - df["YG"]
-    # Billispor 1, Prospor 2 olacak şekilde sırala
     return df.sort_values(by=["P", "Av"], ascending=[False, False])
 
 # SEKMELER
@@ -115,13 +128,12 @@ tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "📅 FİKSTÜR"])
 
 with tab1:
     df = get_standings()
-    # Kart Görünümü
     for i, row in df.iterrows():
         l_class = "leader" if i == 0 else ""
         st.markdown(f"""
         <div class="team-card {l_class}">
             <div>
-                <b style="font-size:20px;">{i+1}. {row['Takım'].upper()}</b><br>
+                <b style="font-size:22px;">{i+1}. {row['Takım'].upper()}</b><br>
                 <small style="color:#64748b;">{row['O']} Maç | {row['G']}G {row['B']}B {row['M']}M</small>
             </div>
             <div class="stats-right">
@@ -132,7 +144,6 @@ with tab1:
         """, unsafe_allow_html=True)
     
     st.write("### Detaylı Puan Durumu")
-    # İşaretlediğin '0' ve '1' rakamlarını kaldırmak için index=False kullanıyoruz
     st.dataframe(df[["Takım", "O", "G", "B", "M", "AG", "YG", "Av", "P"]], use_container_width=True, hide_index=True)
 
 with tab2:
@@ -143,11 +154,10 @@ with tab2:
         h = "Prospor" if w % 2 == 0 else "Billispor"
         a = "Billispor" if h == "Prospor" else "Prospor"
         res = f"<b>{st.session_state.matches[w]['EvSkor']} - {st.session_state.matches[w]['DepSkor']}</b>" if w in st.session_state.matches else "vs"
-        
         st.markdown(f"""
         <div class="match-card">
             <div style="width:100px;"><b>{w}. Hafta</b><br><small>{date.strftime('%d.%m.%Y')}</small></div>
             <div style="flex-grow:1; text-align:center; font-size:18px;">{h} &nbsp; {res} &nbsp; {a}</div>
-            <div style="width:100px; text-align:right; color:#16a34a;">●</div>
+            <div style="width:100px; text-align:right; color:#16a34a;">⌛</div>
         </div>
         """, unsafe_allow_html=True)
