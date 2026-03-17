@@ -7,19 +7,25 @@ st.set_page_config(page_title="Velochori Süper Lig", layout="wide")
 # CSS
 st.markdown("""
 <style>
-.main{background:linear-gradient(135deg,#eef2ff,#f8fafc);}
 
+.main{
+background:linear-gradient(rgba(255,255,255,0.9),rgba(255,255,255,0.9)),
+url("https://images.unsplash.com/photo-1517927033932-b3d18e61fb3a");
+background-size:cover;
+}
+
+/* başlık */
 .title{
 text-align:center;
-font-size:55px;
+font-size:60px;
 font-weight:900;
+margin-bottom:30px;
 background:linear-gradient(90deg,#16a34a,#4ade80);
 -webkit-background-clip:text;
 -webkit-text-fill-color:transparent;
-margin-bottom:30px;
 }
 
-/* takım kart */
+/* kart */
 .card{
 display:flex;
 align-items:center;
@@ -28,12 +34,12 @@ background:white;
 padding:20px;
 border-radius:15px;
 margin-bottom:15px;
-box-shadow:0 6px 15px rgba(0,0,0,0.08);
+box-shadow:0 8px 20px rgba(0,0,0,0.1);
 transition:.3s;
 }
 
 .card:hover{
-transform:scale(1.03);
+transform:scale(1.04);
 }
 
 /* lider */
@@ -42,7 +48,13 @@ border:3px solid gold;
 box-shadow:0 0 25px gold;
 }
 
-/* skor animasyon */
+/* logo */
+.logo{
+width:60px;
+border-radius:10px;
+}
+
+/* skor */
 .goal{
 font-size:28px;
 font-weight:900;
@@ -52,7 +64,7 @@ animation:pulse 1.5s infinite;
 
 @keyframes pulse{
 0%{transform:scale(1)}
-50%{transform:scale(1.15)}
+50%{transform:scale(1.2)}
 100%{transform:scale(1)}
 }
 
@@ -70,10 +82,11 @@ if st.sidebar.button("🔄 Sıfırla"):
     st.session_state.matches = {}
     st.rerun()
 
-# SKOR GİRİŞ
-st.sidebar.header("⚽ Skor")
+# SKOR GİR
+st.sidebar.header("⚽ Skor Gir")
 
 with st.sidebar.form("form"):
+
     w = st.number_input("Hafta",11,20,11)
 
     home = "Prospor" if w%2==0 else "Billispor"
@@ -82,6 +95,7 @@ with st.sidebar.form("form"):
     st.write(home,"vs",away)
 
     c1,c2 = st.columns(2)
+
     hs = c1.number_input(home,0,200)
     as_ = c2.number_input(away,0,200)
 
@@ -96,12 +110,12 @@ with st.sidebar.form("form"):
             st.balloons()
             st.success("⚽ GOALLL!")
 
-# TABLO
-def table():
+# TABLO FONKSİYON
+def get_table():
 
     stats = {
-        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18},
-        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":154,"YG":150,"P":12}
+        "Billispor":{"O":10,"G":6,"B":0,"M":4,"AG":150,"YG":154,"P":18,"Logo":"billispor.png"},
+        "Prospor":{"O":10,"G":4,"B":0,"M":6,"AG":154,"YG":150,"P":12,"Logo":"prospor.png"}
     }
 
     for m in st.session_state.matches.values():
@@ -125,16 +139,16 @@ def table():
 
     return df.sort_values(["P","Av"],ascending=False)
 
-# TABLAR
+# TABS
 tab1,tab2,tab3 = st.tabs(["📊 Puan","📅 Fikstür","📈 Grafik"])
 
 # PUAN
 with tab1:
 
-    df = table().reset_index()
-    df.columns=["Takım","O","G","B","M","AG","YG","P","Av"]
+    df = get_table().reset_index()
+    df.columns=["Takım","O","G","B","M","AG","YG","P","Logo","Av"]
 
-    df.index+=1
+    df.index +=1
 
     medals=["🥇","🥈","🥉"]
 
@@ -145,8 +159,20 @@ with tab1:
 
         st.markdown(f"""
         <div class="card {leader}">
-        <div>{medal} {row['Takım']}</div>
-        <div>{row['P']} Puan</div>
+        
+        <div style="display:flex;align-items:center;gap:15px;">
+        <img src="file/{row['Logo']}" class="logo">
+        <div>
+        <b>{medal} {row['Takım']}</b><br>
+        <small>{row['O']} Maç</small>
+        </div>
+        </div>
+
+        <div>
+        <b>{row['P']} P</b><br>
+        <small>Av {row['Av']}</small>
+        </div>
+
         </div>
         """, unsafe_allow_html=True)
 
@@ -181,6 +207,5 @@ with tab2:
 # GRAFİK
 with tab3:
 
-    df = table()
-
+    df = get_table()
     st.line_chart(df["P"])
