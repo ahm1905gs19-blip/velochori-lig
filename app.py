@@ -11,42 +11,16 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
 .stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
 
-/* ŞAMPİYONLUK ANALİZ PANELİ */
-.analysis-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-radius: 20px;
-    padding: 25px;
-    margin-bottom: 25px;
-    color: white;
-    border: 1px solid #334155;
-    box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-}
-.magic-number {
-    font-size: 3rem;
-    font-weight: 900;
-    color: #fbbf24;
-    font-family: 'JetBrains Mono', monospace;
-    line-height: 1;
-}
-.progress-container {
-    background: #334155;
-    height: 12px;
-    border-radius: 10px;
-    margin: 15px 0;
-    overflow: hidden;
-}
-.progress-bar {
-    background: linear-gradient(90deg, #10b981, #34d399);
-    height: 100%;
-    border-radius: 10px;
-    transition: width 1s ease-in-out;
-}
-
 /* ANA BAŞLIK - KORUNDU */
 .league-title {
-    font-size: clamp(30px, 7vw, 60px); font-weight: 900; text-align: center;
-    padding: 25px 0; background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
-    background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+    font-size: clamp(30px, 7vw, 60px);
+    font-weight: 900;
+    text-align: center;
+    padding: 25px 0;
+    background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
+    background-size: 200% auto;
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
     animation: shine 4s linear infinite;
 }
 @keyframes shine { to { background-position: 200% center; } }
@@ -55,13 +29,15 @@ st.markdown("""
 .team-card {
     display: flex; justify-content: space-between; align-items: center;
     background: white; padding: 20px; border-radius: 20px;
-    margin-bottom: 15px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 15px;
+    margin-bottom: 15px; border: 1px solid #e2e8f0;
+    flex-wrap: wrap; gap: 15px;
 }
 .leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
 
 .f-dot {
-    width: 24px; height: 24px; border-radius: 6px; display: flex; align-items: center; 
-    justify-content: center; font-size: 11px; font-weight: 900; color: white; margin-right: 4px;
+    width: 24px; height: 24px; border-radius: 6px;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 900; color: white; margin-right: 4px;
 }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
@@ -73,18 +49,62 @@ st.markdown("""
 .custom-table th { background: #1e293b; color: white; padding: 12px; font-size: 12px; }
 .custom-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; }
 
-/* FİKSTÜR - KORUNDU */
+/* --- YENİ NESİL FİKSTÜR (ŞAŞIRTAN KISIM) --- */
 .stadium-card {
-    background: linear-gradient(145deg, #ffffff, #f8fafc); border-radius: 25px;
-    padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
-    display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
+    background: linear-gradient(145deg, #ffffff, #f8fafc);
+    border-radius: 25px;
+    padding: 20px;
+    margin-bottom: 15px;
+    border: 1px solid #e2e8f0;
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    position: relative;
+    overflow: hidden;
     transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
 }
 .stadium-card:hover { transform: scale(1.02); box-shadow: 0 20px 40px rgba(0,0,0,0.08); }
+
+.match-header {
+    display: flex; justify-content: space-between; align-items: center;
+    border-bottom: 1px dashed #e2e8f0; padding-bottom: 10px;
+}
+.week-badge {
+    background: #059669; color: white; padding: 4px 12px;
+    border-radius: 50px; font-size: 12px; font-weight: 900;
+}
+
+.arena-floor {
+    display: flex; justify-content: space-between; align-items: center;
+    padding: 10px 0;
+}
+.team-box {
+    flex: 1; text-align: center;
+}
+.team-name { font-size: 1.1rem; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; }
+.home-vibe { border-bottom: 3px solid #10b981; display: inline-block; padding: 0 5px; }
+
 .digital-scoreboard {
-    background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
-    font-size: 2.2rem; padding: 10px 25px; border-radius: 15px; min-width: 120px;
-    text-align: center; border: 2px solid #1e293b; display: flex; justify-content: center; align-items: center;
+    background: #0f172a;
+    color: #34d399;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem;
+    padding: 10px 25px;
+    border-radius: 15px;
+    box-shadow: inset 0 0 10px rgba(0,255,100,0.2);
+    min-width: 120px;
+    text-align: center;
+    border: 2px solid #1e293b;
+    display: flex; justify-content: center; align-items: center;
+}
+.vs-glow { color: #64748b; font-size: 0.8rem; font-family: 'Inter'; font-weight: 900; }
+
+.match-footer {
+    display: flex; justify-content: center; gap: 20px;
+}
+.status-pill {
+    font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 8px;
+    display: flex; align-items: center; gap: 5px;
 }
 </style>
 """, unsafe_allow_html=True)
@@ -121,6 +141,7 @@ with st.sidebar:
     with st.form("match_admin"):
         h_no = st.number_input("Hafta Seç", 11, 20, 11)
         ev, dep = ("Prospor", "Billispor") if h_no % 2 == 0 else ("Billispor", "Prospor")
+        st.success(f"📌 {ev} evinde ağırlıyor.")
         c1, c2 = st.columns(2)
         s1 = c1.number_input(f"{ev}", 0, 100, 0)
         s2 = c2.number_input(f"{dep}", 0, 100, 0)
@@ -128,42 +149,11 @@ with st.sidebar:
             st.session_state.matches[h_no] = {"Ev": ev, "EvSkor": s1, "Dep": dep, "DepSkor": s2}
             st.rerun()
 
-# --- ANA EKRAN ---
+# --- TABLAR ---
 tab1, tab2 = st.tabs(["📊 LİG TABLOSU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
     df = get_live_stats()
-    
-    # --- 1. ŞAMPİYONLUK ANALİZİ (YENİ) ---
-    lider = df.iloc[0]
-    ikinci = df.iloc[1]
-    toplam_hafta = 20
-    kalan_mac = toplam_hafta - lider['O']
-    max_rakip_puan = ikinci['P'] + (kalan_mac * 3)
-    sihirli_sayi = max_rakip_puan - lider['P'] + 1
-    if sihirli_sayi < 0: sihirli_sayi = 0
-    
-    # Şampiyonluk İlerlemesi (Basit bir oran: Mevcut Puan / Şampiyonluk için gereken tahmini puan)
-    progress = min(100, int((lider['P'] / max_rakip_puan) * 100)) if max_rakip_puan > 0 else 100
-    
-    st.markdown(f"""
-    <div class="analysis-card">
-        <div style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:20px;">
-            <div style="flex:1; min-width:250px;">
-                <h3 style="margin:0; color:#94a3b8; font-size:14px; letter-spacing:2px;">ŞAMPİYONLUK KİLİDİ</h3>
-                <h2 style="margin:5px 0; color:white;">{lider['Takım'].upper()} YOLUNDA</h2>
-                <div class="progress-container"><div class="progress-bar" style="width: {progress}%"></div></div>
-                <p style="margin:0; font-size:12px; color:#94a3b8;">Şampiyonluk ihtimali ve puan avantajı analizi yapıldı.</p>
-            </div>
-            <div style="text-align:center; border-left:1px solid #334155; padding-left:30px;">
-                <div class="magic-number">{sihirli_sayi}</div>
-                <div style="font-size:10px; font-weight:900; color:#fbbf24; margin-top:5px;">SİHİRLİ SAYI</div>
-            </div>
-        </div>
-    </div>
-    """, unsafe_allow_html=True)
-    
-    # Sıralama Kartları (Korundu)
     for idx, r in df.reset_index(drop=True).iterrows():
         is_l = idx == 0
         f_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
@@ -199,12 +189,17 @@ with tab1:
 
 with tab2:
     start_date = datetime.date(2026, 3, 22)
+    st.markdown("<br>", unsafe_allow_html=True)
     for i in range(10):
         w = 11 + i
         m_dt = start_date + datetime.timedelta(days=7*i)
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         res = st.session_state.matches.get(w)
+        
+        # Dinamik İçerik
         score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>' if res else '<div class="vs-glow">VS</div>'
+        status_pill = f'<div class="status-pill" style="background:#dcfce7; color:#166534;">● BİTTİ</div>' if res else f'<div class="status-pill" style="background:#f1f5f9; color:#64748b;">○ BEKLEYEN MAÇ</div>'
+        
         st.markdown(f"""
         <div class="stadium-card">
             <div class="match-header">
@@ -212,9 +207,20 @@ with tab2:
                 <span style="font-size:12px; font-weight:700; color:#94a3b8;">{m_dt.strftime('%d %B %Y')}</span>
             </div>
             <div class="arena-floor">
-                <div class="team-box"><span class="team-name home-vibe">{ev_t}</span></div>
-                <div class="digital-scoreboard">{score_display}</div>
-                <div class="team-box"><span class="team-name">{dep_t}</span></div>
+                <div class="team-box">
+                    <span class="team-name home-vibe">{ev_t}</span>
+                    <div style="font-size:10px; color:#10b981; font-weight:800; margin-top:5px;">EV SAHİBİ</div>
+                </div>
+                <div class="digital-scoreboard">
+                    {score_display}
+                </div>
+                <div class="team-box">
+                    <span class="team-name">{dep_t}</span>
+                    <div style="font-size:10px; color:#94a3b8; font-weight:800; margin-top:5px;">DEPLASMAN</div>
+                </div>
+            </div>
+            <div class="match-footer">
+                {status_pill}
             </div>
         </div>
         """, unsafe_allow_html=True)
