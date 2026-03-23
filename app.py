@@ -55,7 +55,6 @@ st.markdown("""
     border-radius: 20px; transition: width 1.5s ease-in-out;
 }
 
-/* FİKSTÜR - STADYUM KARTI */
 .stadium-card {
     background: linear-gradient(145deg, #ffffff, #f8fafc);
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
@@ -144,10 +143,10 @@ with tab1:
     st.markdown(t_html, unsafe_allow_html=True)
 
 with tab2:
-    # BUGÜNÜ 23 MART 2026 KABUL EDİYORUZ, BAŞLANGIÇ TARİHİNİ BUGÜN YAPTIM
     start_date = datetime.date.today() 
     today = datetime.date.today()
     aylar = {"January": "Ocak", "February": "Şubat", "March": "Mart", "April": "Nisan", "May": "Mayıs", "June": "Haziran", "July": "Temmuz", "August": "Ağustos", "September": "Eylül", "October": "Ekim", "November": "Kasım", "December": "Aralık"}
+    mac_saati = "19:30"
     
     for i in range(10):
         w = 11 + i
@@ -167,7 +166,10 @@ with tab2:
         st.markdown(f"""
         <div class="stadium-card {'today-card' if is_today else ''}">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
-                <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                <div style="display:flex; align-items:center; gap:8px;">
+                    <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 {mac_saati}</span>
+                </div>
                 <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
@@ -180,6 +182,7 @@ with tab2:
         """, unsafe_allow_html=True)
 
 with tab3:
+    # ... (Şampiyonluk analizi kısmı aynı kalıyor)
     df = get_live_stats()
     lider, ikinci = df.iloc[0], df.iloc[1]
     kalan = 20 - lider['O']
