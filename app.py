@@ -11,7 +11,6 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
 .stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
 
-/* ANA BAŞLIK */
 .league-title {
     font-size: clamp(24px, 5vw, 45px); font-weight: 900; text-align: center;
     padding: 15px 0; background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
@@ -20,7 +19,6 @@ st.markdown("""
 }
 @keyframes shine { to { background-position: 200% center; } }
 
-/* SIRALAMA KARTLARI (KOMPAKT) */
 .team-card {
     display: flex; justify-content: space-between; align-items: center;
     background: white; padding: 12px 20px; border-radius: 15px;
@@ -34,7 +32,6 @@ st.markdown("""
 }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
-/* DETAYLI TABLO (SIKIŞTIRILDI) */
 .custom-table {
     width: 100%; border-collapse: collapse; background: white;
     border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
@@ -42,7 +39,6 @@ st.markdown("""
 .custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 
-/* ŞAMPİYONLUK ANALİZ KARTI (PREMIUM) */
 .analysis-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-radius: 25px; padding: 40px; color: white; border: 1px solid #334155;
@@ -65,6 +61,12 @@ st.markdown("""
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
     display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
 }
+/* BUGÜNÜN MAÇI İÇİN ÖZEL PARLAMA */
+.today-card {
+    border: 2px solid #10b981 !important;
+    box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
+}
+
 .digital-scoreboard {
     background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
     font-size: 2.2rem; padding: 10px 25px; border-radius: 15px; text-align: center; 
@@ -138,40 +140,47 @@ with tab1:
         """, unsafe_allow_html=True)
     
     st.markdown("#### 📈 PERFORMANS ANALİZİ")
-    t_html = f"""
-    <table class="custom-table">
-        <thead>
-            <tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th></tr>
-        </thead>
-        <tbody>
-            {"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td style='color:#10b981; font-weight:900;'>{row['P']}</td></tr>" for _, row in df.iterrows()])}
-        </tbody>
-    </table>
-    """
+    t_html = f"""<table class="custom-table"><thead><tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th></tr></thead><tbody>{"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td style='color:#10b981; font-weight:900;'>{row['P']}</td></tr>" for _, row in df.iterrows()])}</tbody></table>"""
     st.markdown(t_html, unsafe_allow_html=True)
 
 with tab2:
     start_date = datetime.date(2026, 3, 22)
+    today = datetime.date.today()
     aylar = {"January": "Ocak", "February": "Şubat", "March": "Mart", "April": "Nisan", "May": "Mayıs", "June": "Haziran", "July": "Temmuz", "August": "Ağustos", "September": "Eylül", "October": "Ekim", "November": "Kasım", "December": "Aralık"}
+    
     for i in range(10):
         w = 11 + i
         m_dt = start_date + datetime.timedelta(days=7*i)
-        tarih_tr = f"{m_dt.strftime('%d')} {aylar[m_dt.strftime('%B')]} {m_dt.strftime('%Y')}"
+        is_today = m_dt == today
+        
+        # Tarih formatı ve BUGÜN kontrolü
+        tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar[m_dt.strftime('%B')]} {m_dt.strftime('%Y')}"
+        
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         res = st.session_state.matches.get(w)
         score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>' if res else '<div style="color:#64748b; font-size:0.8rem; font-weight:900;">VS</div>'
+        
+        # Durum yazısı
+        status_text = '● MAÇ BİTTİ' if res else ('🔥 MAÇ GÜNÜ' if is_today else '○ BEKLİYOR')
+        status_color = '#166534' if res else ('#059669' if is_today else '#64748b')
+        status_bg = '#dcfce7' if res else ('#ecfdf5' if is_today else '#f1f5f9')
+
         st.markdown(f"""
-        <div class="stadium-card">
+        <div class="stadium-card {'today-card' if is_today else ''}">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
-                <span style="background:#059669; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                <span style="font-size:12px; font-weight:700; color:#94a3b8;">{tarih_tr}</span>
+                <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
                 <div style="flex:1; text-align:center;"><span class="team-name home-vibe">{ev_t}</span><br><small style="color:#10b981; font-weight:800; font-size:9px;">EV SAHİBİ</small></div>
                 <div class="digital-scoreboard">{score_display}</div>
                 <div style="flex:1; text-align:center;"><span class="team-name">{dep_t}</span><br><small style="color:#94a3b8; font-weight:800; font-size:9px;">DEPLASMAN</small></div>
             </div>
-            <div style="display:flex; justify-content:center;"><div class="status-pill" style="background:{'#dcfce7' if res else '#f1f5f9'}; color:{'#166534' if res else '#64748b'};">{'● MAÇ BİTTİ' if res else '○ BEKLİYOR'}</div></div>
+            <div style="display:flex; justify-content:center;">
+                <div class="status-pill" style="background:{status_bg}; color:{status_color};">
+                    {status_text}
+                </div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
