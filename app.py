@@ -61,7 +61,6 @@ st.markdown("""
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
     display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
 }
-/* BUGÜNÜN MAÇI İÇİN ÖZEL PARLAMA */
 .today-card {
     border: 2px solid #10b981 !important;
     box-shadow: 0 0 20px rgba(16, 185, 129, 0.2);
@@ -72,6 +71,7 @@ st.markdown("""
     font-size: 2.2rem; padding: 10px 25px; border-radius: 15px; text-align: center; 
     border: 2px solid #1e293b; display: flex; justify-content: center; align-items: center; min-width: 120px;
 }
+.vs-text { color: #64748b; font-size: 0.8rem; font-weight: 900; }
 .team-name { font-size: 1.1rem; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; }
 .home-vibe { border-bottom: 3px solid #10b981; display: inline-block; padding: 0 5px; }
 .status-pill { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 8px; }
@@ -144,7 +144,8 @@ with tab1:
     st.markdown(t_html, unsafe_allow_html=True)
 
 with tab2:
-    start_date = datetime.date(2026, 3, 22)
+    # BUGÜNÜ 23 MART 2026 KABUL EDİYORUZ, BAŞLANGIÇ TARİHİNİ BUGÜN YAPTIM
+    start_date = datetime.date.today() 
     today = datetime.date.today()
     aylar = {"January": "Ocak", "February": "Şubat", "March": "Mart", "April": "Nisan", "May": "Mayıs", "June": "Haziran", "July": "Temmuz", "August": "Ağustos", "September": "Eylül", "October": "Ekim", "November": "Kasım", "December": "Aralık"}
     
@@ -153,14 +154,12 @@ with tab2:
         m_dt = start_date + datetime.timedelta(days=7*i)
         is_today = m_dt == today
         
-        # Tarih formatı ve BUGÜN kontrolü
         tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar[m_dt.strftime('%B')]} {m_dt.strftime('%Y')}"
         
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         res = st.session_state.matches.get(w)
-        score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>' if res else '<div style="color:#64748b; font-size:0.8rem; font-weight:900;">VS</div>'
+        score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>' if res else '<div class="vs-text">VS</div>'
         
-        # Durum yazısı
         status_text = '● MAÇ BİTTİ' if res else ('🔥 MAÇ GÜNÜ' if is_today else '○ BEKLİYOR')
         status_color = '#166534' if res else ('#059669' if is_today else '#64748b')
         status_bg = '#dcfce7' if res else ('#ecfdf5' if is_today else '#f1f5f9')
@@ -176,11 +175,7 @@ with tab2:
                 <div class="digital-scoreboard">{score_display}</div>
                 <div style="flex:1; text-align:center;"><span class="team-name">{dep_t}</span><br><small style="color:#94a3b8; font-weight:800; font-size:9px;">DEPLASMAN</small></div>
             </div>
-            <div style="display:flex; justify-content:center;">
-                <div class="status-pill" style="background:{status_bg}; color:{status_color};">
-                    {status_text}
-                </div>
-            </div>
+            <div style="display:flex; justify-content:center;"><div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -201,16 +196,8 @@ with tab3:
         <div class="progress-container"><div class="progress-bar" style="width:{yuzde}%"></div></div>
         <p style="font-size:1.2rem; color:#cbd5e1;">Kupaya Yakınlık: <b>%{yuzde}</b></p>
         <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 30px;">
-            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                <div class="magic-number-big">{sihirli}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 800; letter-spacing:1px;">SİHİRLİ SAYI</div>
-            </div>
-            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);">
-                <div class="magic-number-big" style="color:#10b981;">{gereken_galibiyet}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 800; letter-spacing:1px;">GEREKEN GALİBİYET</div>
-            </div>
-        </div>
-        <div style="margin-top: 30px; padding: 15px; background: rgba(16, 185, 129, 0.1); border-radius: 10px; border: 1px dashed #10b981;">
-            <span style="color: #10b981; font-weight: 800; font-size: 12px;">📣 SENARYO:</span>
-            <p style="color: #cbd5e1; font-size: 13px; margin: 5px 0;">{lider['Takım']} kalan <b>{kalan}</b> maçta <b>{gereken_galibiyet}</b> galibiyet alırsa şampiyon olur!</p>
+            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);"><div class="magic-number-big">{sihirli}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 800;">SİHİRLİ SAYI</div></div>
+            <div style="background: rgba(255,255,255,0.05); padding: 20px; border-radius: 15px; border: 1px solid rgba(255,255,255,0.1);"><div class="magic-number-big" style="color:#10b981;">{gereken_galibiyet}</div><div style="font-size: 10px; color: #94a3b8; font-weight: 800;">GEREKEN G</div></div>
         </div>
     </div>
     """, unsafe_allow_html=True)
