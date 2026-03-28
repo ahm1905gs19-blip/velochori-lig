@@ -33,14 +33,13 @@ st.markdown("""
 .championship-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
     border-radius: 30px; padding: 40px; color: white; border: 2px solid #fbbf24;
-    text-align: center; position: relative; overflow: hidden;
-    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+    text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
 .stat-box {
     background: rgba(255, 255, 255, 0.05); border-radius: 15px;
     padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1);
 }
-.stat-val { font-size: 1.8rem; font-weight: 900; color: #fbbf24; }
+.stat-val { font-size: 1.8rem; font-weight: 900; color: #fbbf24; display: block; }
 .stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
 /* DİĞER STANDART STİLLER */
@@ -131,42 +130,26 @@ with tab2:
         is_live = is_today and now_time >= match_time and not res
 
         if res:
-            status_text, status_color, status_bg = '● BİTTİ', '#166534', '#dcfce7'
-            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1.2rem; color:#475569; margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
-            score_class = "digital-scoreboard"
+            status_text, score_display = '● BİTTİ', f'<div>{res["EvSkor"]}</div><div style="margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
         elif is_live:
-            status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR</span>', '#ef4444', '#fee2e2'
-            score_display = '<div class="vs-text">CANLI</div>'
-            score_class = "digital-scoreboard live-scoreboard"
-        elif is_today:
-            status_text, status_color, status_bg = '🔥 MAÇ GÜNÜ', '#059669', '#ecfdf5'
-            score_display = '<div class="vs-text">VS</div>'
-            score_class = "digital-scoreboard"
+            status_text, score_display = '<span class="live-anim">⚽ OYNANIYOR</span>', '<div class="vs-text">CANLI</div>'
         else:
-            status_text, status_color, status_bg = '○ BEKLİYOR', '#64748b', '#f1f5f9'
-            score_display = '<div class="vs-text">VS</div>'
-            score_class = "digital-scoreboard"
+            status_text, score_display = '○ BEKLİYOR', '<div class="vs-text">VS</div>'
 
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
-        tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
+        tarih_str = "📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
 
         st.markdown(f"""
-        <div class="stadium-card {'today-card' if is_today else ''}">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="background:#1e293b; color:white; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                    <span style="color:#64748b; font-size:12px; font-weight:700;">🕒 18:30</span>
-                </div>
-                <span style="font-size:12px; font-weight:800; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
+        <div class="stadium-card">
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:10px; font-weight:800; color:#94a3b8;">
+                <span>{w}. HAFTA | 🕒 18:30</span><span>{tarih_str}</span>
             </div>
             <div class="match-container">
                 <div class="team-box team-left"><span class="team-name">{ev_t}</span></div>
-                <div class="{score_class}">{score_display}</div>
+                <div class="digital-scoreboard">{score_display}</div>
                 <div class="team-box team-right"><span class="team-name">{dep_t}</span></div>
             </div>
-            <div style="display:flex; justify-content:center; margin-top:10px;">
-                <div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div>
-            </div>
+            <div style="display:flex; justify-content:center; margin-top:10px;"><div class="status-pill">{status_text}</div></div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -174,40 +157,26 @@ with tab3:
     df = get_live_stats()
     lider = df.iloc[0]
     ikinci = df.iloc[1]
-    kalan_hafta = 20 - lider['O']
-    
-    st.markdown(f"""
+    k_hafta = 20 - lider['O']
+    g_orani = int((lider['G']/lider['O'])*100) if lider['O']>0 else 0
+    fark = lider['P'] - ikinci['P']
+
+    # HTML'i güvenli bir şekilde render etmek için f-string dışına aldım
+    champ_html = f"""
     <div class="championship-card">
-        <div style="font-size: 3.5rem; margin-bottom: 10px;">🏆</div>
-        <h1 style="font-size: clamp(1.8rem, 5vw, 3rem); margin: 0; color: white; letter-spacing: 2px;">
-            {lider["Takım"].upper()}
-        </h1>
-        <p style="color: #fbbf24; font-weight: 800; font-size: 1.1rem; margin-top: 5px;">
-            ŞAMPİYONLUK YOLUNDA LİDER!
-        </p>
-        
-        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 30px;">
-            <div class="stat-box">
-                <div class="stat-val">{lider['P']}</div>
-                <div class="stat-label">TOPLAM PUAN</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val">{lider['Av']}</div>
-                <div class="stat-label">GENEL AVERAJ</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val">{kalan_hafta}</div>
-                <div class="stat-label">KALAN MAÇ</div>
-            </div>
-            <div class="stat-box">
-                <div class="stat-val">%{int((lider['G']/lider['O'])*100) if lider['O']>0 else 0}</div>
-                <div class="stat-label">G. ORANI</div>
-            </div>
+        <div style="font-size: 3rem;">🏆</div>
+        <h1 style="margin:10px 0; color:white;">{lider['Takım'].upper()}</h1>
+        <p style="color:#fbbf24; font-weight:800;">ŞAMPİYONLUK YOLUNDA LİDER!</p>
+        <div style="display:flex; justify-content:center; gap:10px; margin-top:20px; flex-wrap:wrap;">
+            <div class="stat-box"><span class="stat-val">{lider['P']}</span><span class="stat-label">PUAN</span></div>
+            <div class="stat-box"><span class="stat-val">{lider['Av']}</span><span class="stat-label">AVERAJ</span></div>
+            <div class="stat-box"><span class="stat-val">{k_hafta}</span><span class="stat-label">MAÇ</span></div>
+            <div class="stat-box"><span class="stat-val">%{g_orani}</span><span class="stat-label">GALİBİYET</span></div>
         </div>
-        
-        <div style="margin-top: 35px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 20px;">
-            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px; font-weight: 600;">EN YAKIN RAKİPLE FARK</p>
-            <div style="font-size: 2rem; font-weight: 900; color: #10b981;">{lider['P'] - ikinci['P']} PUAN</div>
+        <div style="margin-top:25px; padding:15px; background:rgba(255,255,255,0.05); border-radius:15px;">
+            <p style="color:#94a3b8; font-size:0.8rem; margin:0;">RAKİPLE FARK</p>
+            <div style="font-size:1.8rem; font-weight:900; color:#10b981;">{fark} PUAN</div>
         </div>
     </div>
-    """, unsafe_allow_html=True)
+    """
+    st.markdown(champ_html, unsafe_allow_html=True)
