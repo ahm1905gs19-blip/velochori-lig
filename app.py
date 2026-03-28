@@ -10,47 +10,29 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
 .stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
 
-/* LİG BAŞLIĞI */
 .league-title {
     font-size: 32px; font-weight: 900; text-align: center; padding: 15px 0;
     background: linear-gradient(90deg, #059669, #10b981, #34d399);
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-/* PUAN DURUMU KARTLARI (KÜÇÜLTÜLMÜŞ) */
-.team-card {
-    display: flex; justify-content: space-between; align-items: center;
-    background: white; padding: 10px 15px; border-radius: 12px;
-    margin-bottom: 8px; border: 1px solid #e2e8f0;
-}
-.leader-card { border: 1.5px solid #fbbf24; background: linear-gradient(135deg, #fffcf0 0%, #ffffff 100%); }
-.team-title { margin: 2px 0; color: #1e293b; font-size: 1rem; font-weight: 800; }
-.points-text { font-size: 26px; font-weight: 900; color: #10b981; line-height: 1; }
+/* DETAYLI TABLO TASARIMI (O G B M...) */
+.custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-bottom: 20px; }
+.custom-table th { background: #1e293b; color: white; padding: 12px; font-size: 12px; text-align: center; }
+.custom-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-size: 14px; color: #1e293b; }
+.custom-table tr:hover { background-color: #f8fafc; }
 
-/* FORM NOKTALARI */
-.f-dot { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; margin-right: 3px; }
+/* KARTLAR VE DİĞERLERİ */
+.team-card { display: flex; justify-content: space-between; align-items: center; background: white; padding: 10px 15px; border-radius: 12px; margin-bottom: 8px; border: 1px solid #e2e8f0; }
+.f-dot { width: 18px; height: 18px; border-radius: 4px; display: inline-flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; margin-right: 3px; }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
-
-/* MAÇ KARTLARI (STADYUM DAHİL) */
+.digital-scoreboard { background: #273142; color: #00ff85; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center; height: 42px; min-width: 95px; border-radius: 10px; margin: 0 40px; line-height: 1; }
 .stadium-card { background: white; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; overflow: hidden; }
-.match-header { background: #f8fafc; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-.stadium-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
-
-/* SKOR KUTUSU (DÜZELTİLMİŞ) */
-.digital-scoreboard {
-    background: #273142; color: #00ff85; font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center;
-    height: 42px; min-width: 95px; border-radius: 10px; margin: 0 40px;
-    border: 1px solid #334155; line-height: 1;
-}
-
-.team-name { font-size: 1rem; font-weight: 800; color: #1e293b; text-transform: uppercase; flex: 1; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. VERİ VE TAKVİM ---
+# --- 2. VERİ YÖNETİMİ ---
 if 'matches' not in st.session_state:
-    # 11. Hafta: Billispor 16-15 Kazandı
     st.session_state.matches = {
         11: {"Ev": "Billispor", "EvSkor": 16, "Dep": "Prospor", "DepSkor": 15, "Stad": "Filia Arena"}
     }
@@ -75,32 +57,42 @@ def get_stats():
     df["Av"] = df["AG"] - df["YG"]
     return df.sort_values(["P", "Av"], ascending=False)
 
-# --- 3. ANA PANEL (SEKMELER) ---
+# --- 3. GÖRÜNÜM (SEKMELER) ---
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
     stats_df = get_stats()
+    
+    # 1. DETAYLI TABLO (O G B M AG YG AV P)
+    st.markdown("### 📉 Detaylı İstatistikler")
+    table_html = f"""
+    <table class="custom-table">
+        <thead>
+            <tr>
+                <th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th>
+            </tr>
+        </thead>
+        <tbody>
+            {"".join([f"<tr><td>{r['Takım']}</td><td>{r['O']}</td><td>{r['G']}</td><td>{r['B']}</td><td>{r['M']}</td><td>{r['AG']}</td><td>{r['YG']}</td><td>{r['Av']}</td><td style='color:#10b981; font-weight:900;'>{r['P']}</td></tr>" for _, r in stats_df.iterrows()])}
+        </tbody>
+    </table>
+    """
+    st.markdown(table_html, unsafe_allow_html=True)
+
+    # 2. KOMPAKT KARTLAR (FORM DURUMU)
+    st.markdown("### ⚡ Form Durumu")
     for idx, r in stats_df.reset_index(drop=True).iterrows():
-        is_lider = idx == 0
         form_dots = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
         st.markdown(f"""
-        <div class="team-card {'leader-card' if is_lider else ''}">
-            <div style="flex:1;">
-                <span style="font-size:9px; font-weight:800; color:#64748b;">{idx+1}. SIRADA</span>
-                <div class="team-title">{r['Takım'].upper()}</div>
-                <div style="display:flex; margin-top:3px;">{form_dots}</div>
-            </div>
-            <div style="text-align:right; display:flex; align-items:center; gap:20px;">
-                <div style="font-size:11px; font-weight:700; color:#94a3b8;">AV: {r['Av']}</div>
-                <div class="points-text">{r['P']}</div>
-            </div>
+        <div class="team-card">
+            <div style="flex:1;"><div style="font-weight:800; font-size:1rem;">{r['Takım'].upper()}</div><div>{form_dots}</div></div>
+            <div style="font-size:24px; font-weight:900; color:#10b981;">{r['P']}</div>
         </div>
         """, unsafe_allow_html=True)
 
 with tab2:
     stadiums = ["Filia Arena", "Velochori Arena", "Olympic Center", "City Stadium"]
-    # 12. Hafta Yarın (29 Mart Pazar) ve her Pazar
     for i in range(10):
         w = 11 + i
         m_date = datetime.date(2026, 3, 28) if w == 11 else datetime.date(2026, 3, 29) + datetime.timedelta(weeks=i-1)
@@ -110,33 +102,30 @@ with tab2:
         if res:
             status = '● BİTTİ'; score_text = f'{res["EvSkor"]} - {res["DepSkor"]}'
         else:
-            status = '🕒 18:30 (GELECEK MAÇ)'; score_text = 'VS'
+            status = '🕒 18:30'; score_text = 'VS'
 
         t1, t2 = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
         st.markdown(f"""
         <div class="stadium-card">
-            <div class="match-header">
-                <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:4px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
-                <span class="stadium-label">📍 {stad}</span>
-                <span style="color:#64748b; font-size:11px; font-weight:800;">{m_date.strftime('%d.%m.%Y')}</span>
+            <div style="background:#f8fafc; padding:8px 15px; display:flex; justify-content:space-between; align-items:center; border-bottom:1px solid #f1f5f9; font-size:11px; font-weight:800; color:#64748b;">
+                <span>{w}. HAFTA</span><span>📍 {stad}</span><span>{m_date.strftime('%d.%m.%Y')}</span>
             </div>
             <div style="padding:25px; display:flex; align-items:center; justify-content:center;">
-                <div class="team-name" style="text-align:right;">{t1}</div>
+                <div style="flex:1; text-align:right; font-weight:800;">{t1}</div>
                 <div class="digital-scoreboard">{score_text}</div>
-                <div class="team-name" style="text-align:left;">{t2}</div>
+                <div style="flex:1; text-align:left; font-weight:800;">{t2}</div>
             </div>
-            <div style="background:#f8fafc; padding:8px; text-align:center; font-size:11px; font-weight:800; color:#64748b; border-top:1px solid #f1f5f9;">{status}</div>
+            <div style="background:#f8fafc; padding:8px; text-align:center; font-size:11px; font-weight:800; color:#64748b;">{status}</div>
         </div>
         """, unsafe_allow_html=True)
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
     st.write("### ⚙️ YÖNETİCİ")
-    with st.form("admin_form"):
-        h_sel = st.number_input("Hafta Seç", 11, 20, 11)
+    with st.form("admin"):
+        h_sel = st.number_input("Hafta", 11, 20, 11)
         t1_a, t2_a = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
-        s1 = st.number_input(f"{t1_a}", 0, 100, 0)
-        s2 = st.number_input(f"{t2_a}", 0, 100, 0)
+        s1 = st.number_input(f"{t1_a}", 0, 100, 0); s2 = st.number_input(f"{t2_a}", 0, 100, 0)
         if st.form_submit_button("KAYDET"):
             st.session_state.matches[h_sel] = {"Ev": t1_a, "EvSkor": s1, "Dep": t2_a, "DepSkor": s2}
             st.rerun()
