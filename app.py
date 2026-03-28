@@ -5,23 +5,23 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
 
-# --- CSS: GELİŞTİRİLMİŞ TASARIM SİSTEMİ ---
+# --- CSS: TASARIM GÜNCELLEMESİ (SAAT VE SKORBOARD DÜZELTİLDİ) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
 .stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
 
-/* ANİMASYONLAR */
+/* CANLI OYNANIYOR ANİMASYONU */
 @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
 @keyframes border-glow { 0% { border-color: #10b981; } 50% { border-color: #fbbf24; } 100% { border-color: #10b981; } }
 
 .live-anim { animation: blink 1.5s infinite; background: #ef4444; color: white; padding: 2px 10px; border-radius: 6px; font-weight: 900; }
 
-/* MAÇ GÜNÜ ÖZEL ETİKETİ */
+/* MAÇ GÜNÜ ROZETİ */
 .match-day-badge {
-    background: #fbbf24; color: #000; padding: 4px 15px; border-radius: 20px;
-    font-weight: 900; font-size: 12px; border: 2px solid #000;
-    box-shadow: 0 4px 10px rgba(251, 191, 36, 0.4);
+    background: #fbbf24; color: #1e293b; padding: 4px 15px; border-radius: 20px;
+    font-weight: 900; font-size: 12px; border: 1.5px solid #1e293b;
+    box-shadow: 0 4px 10px rgba(251, 191, 36, 0.3);
 }
 
 .league-title {
@@ -44,7 +44,7 @@ st.markdown("""
 }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
-/* FİKSTÜR KARTLARI */
+/* FİKSTÜR VE SAAT DÜZENLEMESİ */
 .stadium-card {
     background: white; border-radius: 18px; padding: 0; margin-bottom: 20px; 
     border: 1px solid #e2e8f0; overflow: hidden; position: relative;
@@ -52,30 +52,36 @@ st.markdown("""
 .match-day-card {
     border: 2px solid #fbbf24 !important;
     animation: border-glow 2s infinite;
-    background: #fffdf5;
+    background: #fffdf9;
 }
 .fixture-header { 
     background: #f8fafc; padding: 10px 20px; border-bottom: 1px solid #f1f5f9;
     display: flex; justify-content: space-between; align-items: center;
 }
+
+/* YENİLENMİŞ DİJİTAL TABELA (KOYULUK DENGELENDİ) */
 .digital-scoreboard {
-    background: #1e293b; color: #00ff85; font-family: 'JetBrains Mono', monospace;
-    font-size: 1.8rem; padding: 5px 20px; border-radius: 10px; min-width: 100px;
-    text-align: center;
+    background: #273142; /* Çok az daha açık bir ton */
+    color: #00ff85; /* Parlak neon yeşil */
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.8rem; padding: 6px 22px; border-radius: 12px; min-width: 110px;
+    text-align: center; border: 1px solid #334155;
+    box-shadow: 0 4px 6px rgba(0,0,0,0.1);
 }
-.team-name { font-size: 1.1rem; font-weight: 800; color: #1e293b; flex: 1; }
+
+.team-name { font-size: 1.1rem; font-weight: 800; color: #1e293b; flex: 1; text-transform: uppercase; }
 
 .custom-table {
     width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;
 }
-.custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; }
-.custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
+.custom-table th { background: #1e293b; color: white; padding: 10px; font-size: 11px; }
+.custom-table td { padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 </style>
 """, unsafe_allow_html=True)
 
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 
-# --- VERİ VE HESAPLAMA ---
+# --- VERİ VE HESAPLAMA (DEĞİŞMEDİ) ---
 if 'matches' not in st.session_state: st.session_state.matches = {}
 
 def get_live_stats():
@@ -137,27 +143,24 @@ with tab2:
         arena = "Filia Arena" if w == 11 else "Velochori Arena"
         is_today = (now.date() == m_dt)
         res = st.session_state.matches.get(w)
-        
         is_live = is_today and (match_start_time <= now.time() <= match_end_time) and not res
 
-        # DURUM BELİRLEME
         if res:
             status_html = '<span>● BİTTİ</span>'
-            score_html = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; opacity:0.5; margin:0 15px;">-</div><div>{res["DepSkor"]}</div>'
+            score_html = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; opacity:0.4; margin:0 15px;">-</div><div>{res["DepSkor"]}</div>'
         elif is_live:
             status_html = '<span class="live-anim">⚽ OYNANIYOR...</span>'
-            score_html = '<div style="font-size:1.2rem; color:#34d399;">LIVE</div>'
+            score_html = '<div style="font-size:1.2rem; color:#00ff85;">LIVE</div>'
         elif is_today:
             status_html = '<span class="match-day-badge">🔥 MAÇ GÜNÜ</span>'
-            score_html = '<div style="font-size:1rem; color:#000;">18:30</div>'
+            score_html = '<div style="font-size:1.2rem; color:#00ff85; letter-spacing:1px;">18:30</div>'
         else:
             status_html = f'<span>🕒 18:30</span>'
-            score_html = '<div style="font-size:1rem; color:#64748b;">VS</div>'
+            score_html = '<div style="font-size:1.1rem; color:#94a3b8;">VS</div>'
 
         ev_t, dep_t = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
         tarih_str = "📅 BUGÜN" if is_today else f"{m_dt.strftime('%d.%m.%Y')}"
 
-        # KART TASARIMI
         st.markdown(f"""
         <div class="stadium-card {'match-day-card' if is_today and not res else ''}">
             <div class="fixture-header">
@@ -167,12 +170,12 @@ with tab2:
                 </div>
                 <div style="font-size:11px; font-weight:800; color:{'#fbbf24' if is_today else '#94a3b8'};">{tarih_str}</div>
             </div>
-            <div style="padding: 20px 30px; display: flex; align-items: center; justify-content: space-between;">
-                <div class="team-name" style="text-align:right; margin-right:20px;">{ev_t.upper()}</div>
+            <div style="padding: 25px 30px; display: flex; align-items: center; justify-content: space-between;">
+                <div class="team-name" style="text-align:right;">{ev_t}</div>
                 <div class="digital-scoreboard">{score_html}</div>
-                <div class="team-name" style="text-align:left; margin-left:20px;">{dep_t.upper()}</div>
+                <div class="team-name" style="text-align:left;">{dep_t}</div>
             </div>
-            <div style="background:{'#fffbeb' if is_today else '#f8fafc'}; padding:8px; text-align:center; border-top:1px solid #f1f5f9; font-size:11px; font-weight:800; color:#475569;">
+            <div style="background:{'#fffbeb' if is_today else '#f8fafc'}; padding:10px; text-align:center; border-top:1px solid #f1f5f9; font-size:11px; font-weight:800; color:#475569;">
                 {status_html}
             </div>
         </div>
