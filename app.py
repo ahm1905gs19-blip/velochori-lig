@@ -17,7 +17,7 @@ st.markdown("""
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-/* PUAN DURUMU KARTLARI (KOMPAKT) */
+/* PUAN DURUMU KARTLARI (KÜÇÜLTÜLMÜŞ) */
 .team-card {
     display: flex; justify-content: space-between; align-items: center;
     background: white; padding: 10px 15px; border-radius: 12px;
@@ -31,12 +31,12 @@ st.markdown("""
 .f-dot { width: 18px; height: 18px; border-radius: 4px; display: flex; align-items: center; justify-content: center; font-size: 9px; font-weight: 900; color: white; margin-right: 3px; }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
-/* MAÇ KARTLARI (SOFASCORE STYLE) */
+/* MAÇ KARTLARI (STADYUM DAHİL) */
 .stadium-card { background: white; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; overflow: hidden; }
 .match-header { background: #f8fafc; padding: 8px 15px; display: flex; justify-content: space-between; align-items: center; border-bottom: 1px solid #f1f5f9; }
-.stadium-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; letter-spacing: 0.5px; }
+.stadium-label { font-size: 10px; font-weight: 700; color: #64748b; text-transform: uppercase; }
 
-/* SKOR KUTUSU (TAM MERKEZLENMİŞ) */
+/* SKOR KUTUSU (DÜZELTİLMİŞ) */
 .digital-scoreboard {
     background: #273142; color: #00ff85; font-family: 'JetBrains Mono', monospace;
     font-size: 1.1rem; display: inline-flex; align-items: center; justify-content: center;
@@ -48,30 +48,25 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. VERİ VE TAKVİM MANTIĞI ---
+# --- 2. VERİ VE TAKVİM ---
 if 'matches' not in st.session_state:
-    # 11. HAFTA: BİLLİSPOR 16 - 15 PROSPOR (Senin galibiyetin sabitlendi)
+    # 11. Hafta: Billispor 16-15 Kazandı
     st.session_state.matches = {
         11: {"Ev": "Billispor", "EvSkor": 16, "Dep": "Prospor", "DepSkor": 15, "Stad": "Filia Arena"}
     }
 
-def get_live_stats():
-    # 10 maçlık baz veriler (G-B-M-AG-YG-P)
+def get_stats():
     data = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
         "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
     }
-    # 11. Hafta ve sonrasını ekle
     for w in sorted(st.session_state.matches.keys()):
         m = st.session_state.matches[w]
         data[m["Ev"]]["O"] += 1; data[m["Dep"]]["O"] += 1
         data[m["Ev"]]["AG"] += m["EvSkor"]; data[m["Ev"]]["YG"] += m["DepSkor"]
         data[m["Dep"]]["AG"] += m["DepSkor"]; data[m["Dep"]]["YG"] += m["EvSkor"]
-        
         res = "G" if m["EvSkor"] > m["DepSkor"] else "M" if m["EvSkor"] < m["DepSkor"] else "B"
-        data[m["Ev"]]["form"].append(res)
-        data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
-        
+        data[m["Ev"]]["form"].append(res); data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
         if res == "G": data[m["Ev"]]["P"]+=3; data[m["Ev"]]["G"]+=1; data[m["Dep"]]["M"]+=1
         elif res == "M": data[m["Dep"]]["P"]+=3; data[m["Dep"]]["G"]+=1; data[m["Ev"]]["M"]+=1
         else: data[m["Ev"]]["P"]+=1; data[m["Dep"]]["P"]+=1; data[m["Ev"]]["B"]+=1; data[m["Dep"]]["B"]+=1
@@ -80,12 +75,12 @@ def get_live_stats():
     df["Av"] = df["AG"] - df["YG"]
     return df.sort_values(["P", "Av"], ascending=False)
 
-# --- 3. ANA PANEL ---
+# --- 3. ANA PANEL (SEKMELER) ---
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
-    stats_df = get_live_stats()
+    stats_df = get_stats()
     for idx, r in stats_df.reset_index(drop=True).iterrows():
         is_lider = idx == 0
         form_dots = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
@@ -106,23 +101,16 @@ with tab1:
 with tab2:
     stadiums = ["Filia Arena", "Velochori Arena", "Olympic Center", "City Stadium"]
     # 12. Hafta Yarın (29 Mart Pazar) ve her Pazar
-    
     for i in range(10):
         w = 11 + i
-        if w == 11:
-            m_date = datetime.date(2026, 3, 28) # Oynanan gün
-        else:
-            # Her Pazar olacak şekilde ayarla
-            m_date = datetime.date(2026, 3, 29) + datetime.timedelta(weeks=i-1)
-        
+        m_date = datetime.date(2026, 3, 28) if w == 11 else datetime.date(2026, 3, 29) + datetime.timedelta(weeks=i-1)
         res = st.session_state.matches.get(w)
         stad = stadiums[w % len(stadiums)]
         
         if res:
             status = '● BİTTİ'; score_text = f'{res["EvSkor"]} - {res["DepSkor"]}'
         else:
-            status = '🕒 18:30'; score_text = 'VS'
-            if w == 12: status = '🕒 YARIN 18:30'
+            status = '🕒 18:30 (GELECEK MAÇ)'; score_text = 'VS'
 
         t1, t2 = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
         st.markdown(f"""
@@ -143,9 +131,9 @@ with tab2:
 
 # --- 4. SIDEBAR ---
 with st.sidebar:
-    st.markdown("### ⚙️ SKOR GİRİŞİ")
-    with st.form("admin_panel"):
-        h_sel = st.number_input("Hafta", 11, 20, 11)
+    st.write("### ⚙️ YÖNETİCİ")
+    with st.form("admin_form"):
+        h_sel = st.number_input("Hafta Seç", 11, 20, 11)
         t1_a, t2_a = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
         s1 = st.number_input(f"{t1_a}", 0, 100, 0)
         s2 = st.number_input(f"{t2_a}", 0, 100, 0)
