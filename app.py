@@ -29,40 +29,30 @@ st.markdown("""
 }
 @keyframes shine { to { background-position: 200% center; } }
 
-/* FİKSTÜR HİZALAMA DENKLEMİ */
-.match-container {
-    display: flex; justify-content: space-between; align-items: center; 
-    gap: 15px; width: 100%; padding: 15px 0;
+/* ŞAMPİYONLUK YOLU ÖZEL TASARIM */
+.championship-card {
+    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+    border-radius: 30px; padding: 40px; color: white; border: 2px solid #fbbf24;
+    text-align: center; position: relative; overflow: hidden;
+    box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
 }
+.stat-box {
+    background: rgba(255, 255, 255, 0.05); border-radius: 15px;
+    padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1);
+}
+.stat-val { font-size: 1.8rem; font-weight: 900; color: #fbbf24; }
+.stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 
-.team-box {
-    flex: 1; min-width: 0; display: flex; align-items: center;
-}
+/* DİĞER STANDART STİLLER */
+.match-container { display: flex; justify-content: space-between; align-items: center; gap: 15px; width: 100%; padding: 15px 0; }
+.team-box { flex: 1; min-width: 0; display: flex; align-items: center; }
 .team-left { justify-content: flex-end; text-align: right; }
 .team-right { justify-content: flex-start; text-align: left; }
-
-.team-name {
-    font-size: clamp(0.9rem, 2.5vw, 1.2rem); 
-    font-weight: 900; color: #1e293b; text-transform: uppercase;
-    white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
-}
-
-.digital-scoreboard {
-    background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(1.5rem, 4vw, 2.2rem); padding: 10px 20px; border-radius: 12px; 
-    text-align: center; border: 1px solid #334155;
-    display: flex; justify-content: center; align-items: center;
-    min-width: 110px; flex-shrink: 0;
-}
+.team-name { font-size: clamp(0.9rem, 2.5vw, 1.2rem); font-weight: 900; color: #1e293b; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.digital-scoreboard { background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: clamp(1.5rem, 4vw, 2.2rem); padding: 10px 20px; border-radius: 12px; text-align: center; border: 1px solid #334155; display: flex; justify-content: center; align-items: center; min-width: 110px; flex-shrink: 0; }
 .live-scoreboard { animation: pulse-green 2s infinite; border-color: #10b981; }
-
-.stadium-card {
-    background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px;
-    border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
-}
+.stadium-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
 .today-card { border-left: 6px solid #10b981 !important; background: #f8fafc; }
-
-/* DİĞER STİLLER (TABLO VE KARTLAR) */
 .team-card { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 20px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
 .leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
 .f-dot { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 3px; }
@@ -183,4 +173,41 @@ with tab2:
 with tab3:
     df = get_live_stats()
     lider = df.iloc[0]
-    st.markdown(f'<div class="analysis-card"><h1 style="font-size:3.5rem; margin:10px 0; background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{lider["Takım"].upper()}</h1><p>Şampiyonluk yolunda emin adımlarla ilerliyor!</p></div>', unsafe_allow_html=True)
+    ikinci = df.iloc[1]
+    kalan_hafta = 20 - lider['O']
+    
+    st.markdown(f"""
+    <div class="championship-card">
+        <div style="font-size: 3.5rem; margin-bottom: 10px;">🏆</div>
+        <h1 style="font-size: clamp(1.8rem, 5vw, 3rem); margin: 0; color: white; letter-spacing: 2px;">
+            {lider["Takım"].upper()}
+        </h1>
+        <p style="color: #fbbf24; font-weight: 800; font-size: 1.1rem; margin-top: 5px;">
+            ŞAMPİYONLUK YOLUNDA LİDER!
+        </p>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(120px, 1fr)); gap: 15px; margin-top: 30px;">
+            <div class="stat-box">
+                <div class="stat-val">{lider['P']}</div>
+                <div class="stat-label">TOPLAM PUAN</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">{lider['Av']}</div>
+                <div class="stat-label">GENEL AVERAJ</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">{kalan_hafta}</div>
+                <div class="stat-label">KALAN MAÇ</div>
+            </div>
+            <div class="stat-box">
+                <div class="stat-val">%{int((lider['G']/lider['O'])*100) if lider['O']>0 else 0}</div>
+                <div class="stat-label">G. ORANI</div>
+            </div>
+        </div>
+        
+        <div style="margin-top: 35px; padding: 20px; background: rgba(255,255,255,0.03); border-radius: 20px;">
+            <p style="color: #94a3b8; font-size: 0.9rem; margin-bottom: 10px; font-weight: 600;">EN YAKIN RAKİPLE FARK</p>
+            <div style="font-size: 2rem; font-weight: 900; color: #10b981;">{lider['P'] - ikinci['P']} PUAN</div>
+        </div>
+    </div>
+    """, unsafe_allow_html=True)
