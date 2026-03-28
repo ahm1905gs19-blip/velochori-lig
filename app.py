@@ -43,12 +43,6 @@ st.markdown("""
 .custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 
-.analysis-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-radius: 25px; padding: 40px; color: white; border: 1px solid #334155;
-    text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
-}
-
 .stadium-card {
     background: linear-gradient(145deg, #ffffff, #f8fafc);
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
@@ -97,7 +91,7 @@ with st.sidebar:
     st.markdown("### 🏟️ MAÇ YÖNETİMİ")
     with st.form("match_admin"):
         h_no = st.number_input("Hafta Seç", 11, 20, 11)
-        ev_s, dep_s = ("Prospor", "Billispor") if h_no % 2 == 0 else ("Billispor", "Prospor")
+        ev_s, dep_s = ("Billispor", "Prospor") if h_no % 2 != 0 else ("Prospor", "Billispor")
         c1, c2 = st.columns(2)
         s1 = c1.number_input(f"{ev_s}", 0, 100, 0)
         s2 = c2.number_input(f"{dep_s}", 0, 100, 0)
@@ -106,7 +100,7 @@ with st.sidebar:
             st.rerun()
 
 # --- ANA EKRAN ---
-tab1, tab2, tab3 = st.tabs(["📊 LİG TABLOSU", "🗓️ MAÇ MERKEZİ", "🏆 ŞAMPİYONLUK YOLU"])
+tab1, tab2 = st.tabs(["📊 LİG TABLOSU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
     df = get_live_stats()
@@ -114,31 +108,42 @@ with tab1:
         is_l = idx == 0
         f_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
         st.markdown(f'<div class="team-card {"leader-card" if is_l else ""}"><div style="flex:1;"><span style="background:{"#fbbf24" if is_l else "#f1f5f9"}; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:900;">{ "🏆 LİDER" if is_l else f"RANK {idx+1}"}</span><h3 style="margin:5px 0; color:#1e293b; font-size:1.1rem;">{r["Takım"].upper()}</h3><div style="display:flex;">{f_html}</div></div><div style="display:flex; align-items:center; gap:20px;"><div style="text-align:right;"><div style="font-weight:800; color:#64748b; font-size:12px;">AV: {r["Av"]}</div></div><div style="font-size:32px; font-weight:900; color:#10b981;">{r["P"]}<small style="font-size:12px; color:#94a3b8; margin-left:2px;">P</small></div></div></div>', unsafe_allow_html=True)
-    st.markdown("#### 📈 PERFORMANS ANALİZİ")
+    st.markdown("#### 📈 DETAYLI TABLO")
     t_html = f"""<table class="custom-table"><thead><tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th></tr></thead><tbody>{"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td style='color:#10b981; font-weight:900;'>{row['P']}</td></tr>" for _, row in df.iterrows()])}</tbody></table>"""
     st.markdown(t_html, unsafe_allow_html=True)
 
 with tab2:
-    today = datetime.date.today()
-    now_time = datetime.datetime.now().time()
-    match_time = datetime.time(19, 30)
-    aylar = {"March": "Mart", "April": "Nisan", "May": "Mayıs"}
+    now = datetime.datetime.now()
+    # Maç saati kontrolü: 18:30 ile 20:15 arası
+    match_start_time = datetime.time(18, 30)
+    match_end_time = datetime.time(20, 15)
+    
+    # 11. Hafta Bugün (28 Mart Cumartesi)
+    base_date = datetime.date(2026, 3, 28)
     
     for i in range(10):
         w = 11 + i
-        m_dt = today + datetime.timedelta(days=7*i)
-        is_today = m_dt == today
+        # 11. hafta sabit, sonrası her Pazar
+        if w == 11:
+            m_dt = base_date
+            arena = "Filia Arena"
+        else:
+            # İlk Pazar 29 Mart
+            m_dt = datetime.date(2026, 3, 29) + datetime.timedelta(weeks=i-1)
+            arena = "Velochori Arena"
+            
+        is_today = (now.date() == m_dt)
         res = st.session_state.matches.get(w)
         
-        # OYNANIYOR KONTROLÜ
-        is_live = is_today and now_time >= match_time and not res
+        # CANLI DURUM KONTROLÜ
+        is_live = is_today and (match_start_time <= now.time() <= match_end_time) and not res
 
         if res:
             status_text, status_color, status_bg = '● MAÇ BİTTİ', '#166534', '#dcfce7'
             score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>'
         elif is_live:
             status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR...</span>', '#ef4444', '#fee2e2'
-            score_display = '<div class="vs-text">VS</div>'
+            score_display = '<div class="vs-text" style="font-size:1.2rem;">LIVE</div>'
         elif is_today:
             status_text, status_color, status_bg = '🔥 MAÇ GÜNÜ', '#059669', '#ecfdf5'
             score_display = '<div class="vs-text">VS</div>'
@@ -146,17 +151,20 @@ with tab2:
             status_text, status_color, status_bg = '○ BEKLİYOR', '#64748b', '#f1f5f9'
             score_display = '<div class="vs-text">VS</div>'
 
-        ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
-        tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
+        ev_t, dep_t = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
+        tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d.%m.%Y')}"
 
         st.markdown(f"""
         <div class="stadium-card {'today-card' if is_today else ''}">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 19:30</span>
+                    <span style="background:#10b981; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 18:30</span>
                 </div>
-                <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
+                <div style="text-align:right;">
+                    <div style="font-size:10px; font-weight:700; color:#94a3b8; margin-bottom:2px;">{arena}</div>
+                    <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
+                </div>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
                 <div style="flex:1; text-align:center;"><span class="team-name">{ev_t}</span></div>
@@ -166,8 +174,3 @@ with tab2:
             <div style="display:flex; justify-content:center;"><div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div></div>
         </div>
         """, unsafe_allow_html=True)
-
-with tab3:
-    df = get_live_stats()
-    lider = df.iloc[0]
-    st.markdown(f'<div class="analysis-card"><h1 style="font-size:3.5rem; margin:10px 0; background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{lider["Takım"].upper()}</h1><p>Şampiyonluk yolunda emin adımlarla ilerliyor!</p></div>', unsafe_allow_html=True)
