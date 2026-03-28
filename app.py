@@ -5,7 +5,7 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
 
-# --- CSS: TASARIM GÜNCELLEMESİ (SCOREBOARD FERAHLATILDI) ---
+# --- CSS: SCOREBOARD MESAFE VE BOYUT GÜNCELLEMESİ ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
@@ -19,7 +19,7 @@ st.markdown("""
 
 .match-day-badge {
     background: #fbbf24; color: #1e293b; padding: 4px 15px; border-radius: 20px;
-    font-weight: 900; font-size: 12px; border: 1.5px solid #1e293b;
+    font-weight: 900; font-size: 11px; border: 1.5px solid #1e293b;
 }
 
 .league-title {
@@ -57,24 +57,29 @@ st.markdown("""
     display: flex; justify-content: space-between; align-items: center;
 }
 
-/* --- SCOREBOARD FERAHLATILDI --- */
+/* --- SCOREBOARD KÜÇÜLTÜLDÜ VE MESAFE EKLENDİ --- */
 .digital-scoreboard {
     background: #273142;
     color: #00ff85;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.3rem;
-    padding: 8px 25px; /* İç boşluklar artırıldı (nefes alıyor) */
-    border-radius: 12px;
-    min-width: 100px; /* Kutunun genişliği dengelendi */
+    font-size: 1.1rem; /* Saat biraz daha küçüldü */
+    padding: 5px 15px; /* İç boşluklar daraltıldı */
+    border-radius: 8px;
+    min-width: 80px; /* Genişlik azaltıldı */
+    max-width: 100px;
     text-align: center;
     border: 1px solid #334155;
-    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
-    display: flex; /* İçerik simetrisi için */
-    justify-content: center;
-    align-items: center;
+    box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+    margin: 0 25px; /* Takımlarla arasına mesafe eklendi */
 }
 
-.team-name { font-size: 1.1rem; font-weight: 800; color: #1e293b; flex: 1; text-transform: uppercase; }
+.team-name { 
+    font-size: 1rem; 
+    font-weight: 800; 
+    color: #1e293b; 
+    text-transform: uppercase; 
+    flex: 1;
+}
 
 .custom-table {
     width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;
@@ -152,16 +157,16 @@ with tab2:
 
         if res:
             status_html = '<span>● BİTTİ</span>'
-            score_html = f'<div>{res["EvSkor"]}</div><div style="font-size:0.9rem; opacity:0.3; margin:0 15px;">-</div><div>{res["DepSkor"]}</div>'
+            score_html = f'<div style="display:flex; justify-content:center; align-items:center; width:100%;"><div>{res["EvSkor"]}</div><div style="font-size:0.8rem; opacity:0.3; margin:0 8px;">-</div><div>{res["DepSkor"]}</div></div>'
         elif is_live:
             status_html = '<span class="live-anim">⚽ OYNANIYOR...</span>'
-            score_html = '<div style="font-size:1rem; color:#00ff85;">LIVE</div>'
+            score_html = '<div style="font-size:0.9rem; color:#00ff85;">LIVE</div>'
         elif is_today:
             status_html = '<span class="match-day-badge">🔥 MAÇ GÜNÜ</span>'
-            score_html = '<div style="font-size:1.1rem; color:#00ff85; letter-spacing:0.5px;">18:30</div>'
+            score_html = '<div style="font-size:1rem; color:#00ff85;">18:30</div>'
         else:
             status_html = f'<span>🕒 18:30</span>'
-            score_html = '<div style="font-size:0.9rem; color:#94a3b8;">VS</div>'
+            score_html = '<div style="font-size:0.8rem; color:#94a3b8;">VS</div>'
 
         ev_t, dep_t = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
         tarih_str = "📅 BUGÜN" if is_today else f"{m_dt.strftime('%d.%m.%Y')}"
@@ -170,17 +175,17 @@ with tab2:
         <div class="stadium-card {'match-day-card' if is_today and not res else ''}">
             <div class="fixture-header">
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:6px; font-size:11px; font-weight:800;">{w}. HAFTA</span>
-                    <span style="color:#64748b; font-size:11px; font-weight:700;">📍 {arena}</span>
+                    <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:6px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
+                    <span style="color:#64748b; font-size:10px; font-weight:700;">📍 {arena}</span>
                 </div>
-                <div style="font-size:11px; font-weight:800; color:{'#fbbf24' if is_today else '#94a3b8'};">{tarih_str}</div>
+                <div style="font-size:10px; font-weight:800; color:{'#fbbf24' if is_today else '#94a3b8'};">{tarih_str}</div>
             </div>
-            <div style="padding: 25px 30px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="padding: 15px 20px; display: flex; align-items: center; justify-content: center;">
                 <div class="team-name" style="text-align:right;">{ev_t}</div>
                 <div class="digital-scoreboard">{score_html}</div>
                 <div class="team-name" style="text-align:left;">{dep_t}</div>
             </div>
-            <div style="background:{'#fffbeb' if is_today else '#f8fafc'}; padding:10px; text-align:center; border-top:1px solid #f1f5f9; font-size:11px; font-weight:800; color:#475569;">
+            <div style="background:{'#fffbeb' if is_today else '#f8fafc'}; padding:8px; text-align:center; border-top:1px solid #f1f5f9; font-size:10px; font-weight:800; color:#475569;">
                 {status_html}
             </div>
         </div>
