@@ -161,4 +161,3 @@ with tab2:
             <div style="background:#f8fafc; padding:8px; text-align:center; font-size:10px; font-weight:800; border-top:1px solid #f1f5f9;">{status}</div>
         </div>
         """, unsafe_allow_html=True)
-Buna 16-15 skoru yap , 12. Hafta haftaya Pazar sonra devam etsin her pazar olarak
