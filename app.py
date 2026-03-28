@@ -29,54 +29,56 @@ st.markdown("""
 }
 @keyframes shine { to { background-position: 200% center; } }
 
-.team-card {
-    display: flex; justify-content: space-between; align-items: center;
-    background: white; padding: 12px 20px; border-radius: 15px;
-    margin-bottom: 10px; border: 1px solid #e2e8f0; flex-wrap: wrap; gap: 10px;
-}
-.leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
-
-.f-dot {
-    width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; 
-    justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 3px;
-}
-.W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
-
-/* MAÇ MERKEZİ ÖZEL TASARIM */
+/* FİKSTÜR KARTI DÜZENLEME */
 .stadium-card {
-    background: white;
-    border-radius: 20px; padding: 25px; margin-bottom: 20px;
-    border: 1px solid #e2e8f0;
-    transition: all 0.3s ease;
-    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+    background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px;
+    border: 1px solid #e2e8f0; transition: all 0.3s ease;
 }
-.stadium-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
-
 .today-card { border-left: 6px solid #10b981 !important; background: #f8fafc; }
+
+/* KUTUCUĞA SIĞDIRMA AYARI */
+.match-row {
+    display: flex; justify-content: space-between; align-items: center; 
+    gap: 10px; width: 100%; padding: 10px 0;
+}
+
+.team-container {
+    flex: 1; /* Eşit alan kaplasınlar */
+    display: flex; align-items: center; justify-content: center;
+    min-width: 0; /* Taşmayı önleyen kritik komut */
+}
+
+.team-name {
+    font-size: clamp(0.8rem, 2.5vw, 1.1rem); /* Dinamik yazı boyutu */
+    font-weight: 900; color: #1e293b; text-transform: uppercase;
+    text-align: center; overflow-wrap: break-word; line-height: 1.2;
+}
 
 .digital-scoreboard {
     background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
-    font-size: 2.2rem; padding: 12px 28px; border-radius: 12px; text-align: center; 
-    border: 1px solid #334155; display: flex; justify-content: center; align-items: center; min-width: 130px;
+    font-size: clamp(1.2rem, 3vw, 2rem); padding: 8px 15px; border-radius: 12px; 
+    text-align: center; border: 1px solid #334155;
+    display: flex; justify-content: center; align-items: center;
+    min-width: 100px; flex-shrink: 0; /* Skor kutusu küçülmesin */
 }
 .live-scoreboard { animation: pulse-green 2s infinite; border-color: #10b981; }
 
-.vs-text { color: #64748b; font-size: 0.8rem !important; font-weight: 900; letter-spacing: 2px; }
-.team-name { font-size: 1.2rem; font-weight: 900; color: #1e293b; text-transform: uppercase; }
-.status-pill { font-size: 11px; font-weight: 800; padding: 6px 16px; border-radius: 100px; text-transform: uppercase; }
+.vs-text { color: #64748b; font-size: 0.7rem !important; font-weight: 900; letter-spacing: 1px; }
 
-.analysis-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-radius: 25px; padding: 40px; color: white; border: 1px solid #334155;
-    text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
+/* DİĞER STİLLER */
+.team-card {
+    display: flex; justify-content: space-between; align-items: center;
+    background: white; padding: 12px 20px; border-radius: 15px;
+    margin-bottom: 10px; border: 1px solid #e2e8f0;
 }
-
-.custom-table {
-    width: 100%; border-collapse: collapse; background: white;
-    border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-}
+.leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
+.f-dot { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 3px; }
+.W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
+.status-pill { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; }
+.custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
 .custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
+.analysis-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 25px; padding: 40px; color: white; text-align: center; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -127,10 +129,7 @@ with tab1:
     for idx, r in df.reset_index(drop=True).iterrows():
         is_l = idx == 0
         f_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
-        st.markdown(f'<div class="team-card {"leader-card" if is_l else ""}"><div style="flex:1;"><span style="background:{"#fbbf24" if is_l else "#f1f5f9"}; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:900;">{ "🏆 LİDER" if is_l else f"RANK {idx+1}"}</span><h3 style="margin:5px 0; color:#1e293b; font-size:1.1rem;">{r["Takım"].upper()}</h3><div style="display:flex;">{f_html}</div></div><div style="display:flex; align-items:center; gap:20px;"><div style="text-align:right;"><div style="font-weight:800; color:#64748b; font-size:12px;">AV: {r["Av"]}</div></div><div style="font-size:32px; font-weight:900; color:#10b981;">{r["P"]}<small style="font-size:12px; color:#94a3b8; margin-left:2px;">P</small></div></div></div>', unsafe_allow_html=True)
-    st.markdown("#### 📈 PERFORMANS ANALİZİ")
-    t_html = f"""<table class="custom-table"><thead><tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th></tr></thead><tbody>{"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td style='color:#10b981; font-weight:900;'>{row['P']}</td></tr>" for _, row in df.iterrows()])}</tbody></table>"""
-    st.markdown(t_html, unsafe_allow_html=True)
+        st.markdown(f'<div class="team-card {"leader-card" if is_l else ""}"><div style="flex:1;"><span style="background:{"#fbbf24" if is_l else "#f1f5f9"}; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:900;">{ "🏆 LİDER" if is_l else f"RANK {idx+1}"}</span><h3 style="margin:5px 0; color:#1e293b; font-size:1.1rem;">{r["Takım"].upper()}</h3><div style="display:flex;">{f_html}</div></div><div style="font-size:32px; font-weight:900; color:#10b981;">{r["P"]}<small style="font-size:12px; color:#94a3b8; margin-left:2px;">P</small></div></div>', unsafe_allow_html=True)
 
 with tab2:
     today = datetime.date.today()
@@ -143,15 +142,14 @@ with tab2:
         m_dt = today + datetime.timedelta(days=7*i)
         is_today = m_dt == today
         res = st.session_state.matches.get(w)
-        
         is_live = is_today and now_time >= match_time and not res
 
         if res:
             status_text, status_color, status_bg = '● BİTTİ', '#166534', '#dcfce7'
-            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1.2rem; color:#475569; margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
+            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 8px;">-</div><div>{res["DepSkor"]}</div>'
             score_class = "digital-scoreboard"
         elif is_live:
-            status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR</span>', '#ef4444', '#fee2e2'
+            status_text, status_color, status_bg = '⚽ OYNANIYOR', '#ef4444', '#fee2e2'
             score_display = '<div class="vs-text">CANLI</div>'
             score_class = "digital-scoreboard live-scoreboard"
         elif is_today:
@@ -168,25 +166,6 @@ with tab2:
 
         st.markdown(f"""
         <div class="stadium-card {'today-card' if is_today else ''}">
-            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
-                <div style="display:flex; align-items:center; gap:10px;">
-                    <span style="background:#1e293b; color:white; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                    <span style="color:#64748b; font-size:12px; font-weight:700;">🕒 18:30</span>
-                </div>
-                <span style="font-size:12px; font-weight:800; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
-            </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
-                <div style="flex:1; text-align:right; padding-right:20px;"><span class="team-name">{ev_t}</span></div>
-                <div class="{score_class}">{score_display}</div>
-                <div style="flex:1; text-align:left; padding-left:20px;"><span class="team-name">{dep_t}</span></div>
-            </div>
-            <div style="display:flex; justify-content:center; margin-top:20px;">
-                <div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div>
-            </div>
-        </div>
-        """, unsafe_allow_html=True)
-
-with tab3:
-    df = get_live_stats()
-    lider = df.iloc[0]
-    st.markdown(f'<div class="analysis-card"><h1 style="font-size:3.5rem; margin:10px 0; background: linear-gradient(90deg, #fbbf24, #f59e0b); -webkit-background-clip: text; -webkit-text-fill-color: transparent;">{lider["Takım"].upper()}</h1><p>Şampiyonluk yolunda emin adımlarla ilerliyor!</p></div>', unsafe_allow_html=True)
+            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
+                <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:6px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
+                <span style="font-size:10px; font-weight:800; color
