@@ -29,20 +29,7 @@ st.markdown("""
 }
 @keyframes shine { to { background-position: 200% center; } }
 
-/* ŞAMPİYONLUK YOLU ÖZEL TASARIM */
-.championship-card {
-    background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
-    border-radius: 30px; padding: 40px; color: white; border: 2px solid #fbbf24;
-    text-align: center; box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
-}
-.stat-box {
-    background: rgba(255, 255, 255, 0.05); border-radius: 15px;
-    padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1);
-}
-.stat-val { font-size: 1.8rem; font-weight: 900; color: #fbbf24; display: block; }
-.stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
-
-/* DİĞER STANDART STİLLER */
+/* FİKSTÜR HİZALAMA */
 .match-container { display: flex; justify-content: space-between; align-items: center; gap: 15px; width: 100%; padding: 15px 0; }
 .team-box { flex: 1; min-width: 0; display: flex; align-items: center; }
 .team-left { justify-content: flex-end; text-align: right; }
@@ -51,7 +38,11 @@ st.markdown("""
 .digital-scoreboard { background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace; font-size: clamp(1.5rem, 4vw, 2.2rem); padding: 10px 20px; border-radius: 12px; text-align: center; border: 1px solid #334155; display: flex; justify-content: center; align-items: center; min-width: 110px; flex-shrink: 0; }
 .live-scoreboard { animation: pulse-green 2s infinite; border-color: #10b981; }
 .stadium-card { background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px; border: 1px solid #e2e8f0; transition: all 0.3s ease; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05); }
-.today-card { border-left: 6px solid #10b981 !important; background: #f8fafc; }
+
+/* BUGÜNKÜ MAÇ ÖZEL STİLİ */
+.today-card { border: 2px solid #10b981 !important; background: #f0fdf4 !important; box-shadow: 0 10px 15px -3px rgba(16, 185, 129, 0.2); }
+
+/* TABLO VE DİĞER KARTLAR */
 .team-card { display: flex; justify-content: space-between; align-items: center; background: white; padding: 12px 20px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e2e8f0; }
 .leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
 .f-dot { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 3px; }
@@ -61,6 +52,12 @@ st.markdown("""
 .custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 .vs-text { color: #64748b; font-size: 0.8rem !important; font-weight: 900; }
+
+/* ŞAMPİYONLUK YOLU */
+.championship-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 30px; padding: 40px; color: white; border: 2px solid #fbbf24; text-align: center; }
+.stat-box { background: rgba(255, 255, 255, 0.05); border-radius: 15px; padding: 15px; border: 1px solid rgba(255, 255, 255, 0.1); }
+.stat-val { font-size: 1.8rem; font-weight: 900; color: #fbbf24; display: block; }
+.stat-label { font-size: 0.7rem; color: #94a3b8; text-transform: uppercase; letter-spacing: 1px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -118,29 +115,30 @@ with tab1:
 
 with tab2:
     today = datetime.date.today()
-    now_time = datetime.datetime.now().time()
-    match_time = datetime.time(18, 30)
     aylar = {"March": "Mart", "April": "Nisan", "May": "Mayıs"}
     
     for i in range(10):
         w = 11 + i
         m_dt = today + datetime.timedelta(days=7*i)
-        is_today = m_dt == today
+        is_today = (m_dt == today)
         res = st.session_state.matches.get(w)
-        is_live = is_today and now_time >= match_time and not res
-
+        
+        # STATUS LOGIC
         if res:
-            status_text, score_display = '● BİTTİ', f'<div>{res["EvSkor"]}</div><div style="margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
-        elif is_live:
-            status_text, score_display = '<span class="live-anim">⚽ OYNANIYOR</span>', '<div class="vs-text">CANLI</div>'
+            status_text, s_bg, s_color = '● BİTTİ', '#dcfce7', '#166534'
+            score_display = f'<div>{res["EvSkor"]}</div><div style="margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
+        elif is_today:
+            status_text, s_bg, s_color = '🔥 MAÇ GÜNÜ', '#10b981', 'white' # Yeşil arka plan, beyaz yazı
+            score_display = '<div class="vs-text">BUGÜN</div>'
         else:
-            status_text, score_display = '○ BEKLİYOR', '<div class="vs-text">VS</div>'
+            status_text, s_bg, s_color = '○ BEKLİYOR', '#f1f5f9', '#64748b'
+            score_display = '<div class="vs-text">VS</div>'
 
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         tarih_str = "📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
 
         st.markdown(f"""
-        <div class="stadium-card">
+        <div class="stadium-card {'today-card' if is_today else ''}">
             <div style="display:flex; justify-content:space-between; margin-bottom:10px; font-size:10px; font-weight:800; color:#94a3b8;">
                 <span>{w}. HAFTA | 🕒 18:30</span><span>{tarih_str}</span>
             </div>
@@ -149,7 +147,9 @@ with tab2:
                 <div class="digital-scoreboard">{score_display}</div>
                 <div class="team-box team-right"><span class="team-name">{dep_t}</span></div>
             </div>
-            <div style="display:flex; justify-content:center; margin-top:10px;"><div class="status-pill">{status_text}</div></div>
+            <div style="display:flex; justify-content:center; margin-top:10px;">
+                <div class="status-pill" style="background:{s_bg}; color:{s_color};">{status_text}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
@@ -161,7 +161,6 @@ with tab3:
     g_orani = int((lider['G']/lider['O'])*100) if lider['O']>0 else 0
     fark = lider['P'] - ikinci['P']
 
-    # HTML'i güvenli bir şekilde render etmek için f-string dışına aldım
     champ_html = f"""
     <div class="championship-card">
         <div style="font-size: 3rem;">🏆</div>
