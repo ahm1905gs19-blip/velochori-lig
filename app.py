@@ -5,7 +5,7 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
 
-# --- CSS: SCOREBOARD MESAFE VE BOYUT GÜNCELLEMESİ ---
+# --- CSS: TÜM DÜZELTMELER BİRLEŞTİRİLDİ ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
@@ -19,7 +19,7 @@ st.markdown("""
 
 .match-day-badge {
     background: #fbbf24; color: #1e293b; padding: 4px 15px; border-radius: 20px;
-    font-weight: 900; font-size: 11px; border: 1.5px solid #1e293b;
+    font-weight: 900; font-size: 10px; border: 1.5px solid #1e293b;
 }
 
 .league-title {
@@ -57,29 +57,23 @@ st.markdown("""
     display: flex; justify-content: space-between; align-items: center;
 }
 
-/* --- SCOREBOARD KÜÇÜLTÜLDÜ VE MESAFE EKLENDİ --- */
+/* SCOREBOARD: KÜÇÜK, FERAH VE TAKIMLARA DEĞMİYOR */
 .digital-scoreboard {
     background: #273142;
     color: #00ff85;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.1rem; /* Saat biraz daha küçüldü */
-    padding: 5px 15px; /* İç boşluklar daraltıldı */
+    font-size: 1rem; /* Saat boyutu ideal seviyede */
+    padding: 5px 12px; 
     border-radius: 8px;
-    min-width: 80px; /* Genişlik azaltıldı */
-    max-width: 100px;
+    min-width: 80px; 
     text-align: center;
     border: 1px solid #334155;
     box-shadow: 0 2px 5px rgba(0,0,0,0.1);
-    margin: 0 25px; /* Takımlarla arasına mesafe eklendi */
+    margin: 0 30px; /* Takımlarla aradaki kritik mesafe */
+    display: flex; justify-content: center; align-items: center;
 }
 
-.team-name { 
-    font-size: 1rem; 
-    font-weight: 800; 
-    color: #1e293b; 
-    text-transform: uppercase; 
-    flex: 1;
-}
+.team-name { font-size: 0.95rem; font-weight: 800; color: #1e293b; text-transform: uppercase; flex: 1; }
 
 .custom-table {
     width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden;
@@ -91,7 +85,7 @@ st.markdown("""
 
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 
-# --- VERİ VE HESAPLAMA (DEĞİŞMEDİ) ---
+# --- VERİ VE HESAPLAMA ---
 if 'matches' not in st.session_state: st.session_state.matches = {}
 
 def get_live_stats():
@@ -143,8 +137,8 @@ with tab1:
 
 with tab2:
     now = datetime.datetime.now()
-    match_start_time = datetime.time(18, 30)
-    match_end_time = datetime.time(20, 15)
+    cur_t = now.hour * 100 + now.minute # Örn: 1833
+    start_t, end_t = 1830, 2015
     base_date = datetime.date(2026, 3, 28)
     
     for i in range(10):
@@ -153,20 +147,26 @@ with tab2:
         arena = "Filia Arena" if w == 11 else "Velochori Arena"
         is_today = (now.date() == m_dt)
         res = st.session_state.matches.get(w)
-        is_live = is_today and (match_start_time <= now.time() <= match_end_time) and not res
+        
+        # CANLI KONTROLÜ
+        is_live = is_today and (start_t <= cur_t <= end_t) and not res
 
         if res:
             status_html = '<span>● BİTTİ</span>'
-            score_html = f'<div style="display:flex; justify-content:center; align-items:center; width:100%;"><div>{res["EvSkor"]}</div><div style="font-size:0.8rem; opacity:0.3; margin:0 8px;">-</div><div>{res["DepSkor"]}</div></div>'
+            score_html = f'<div style="display:flex; align-items:center; gap:8px;"><span>{res["EvSkor"]}</span><span style="opacity:0.3; font-size:0.7rem;">-</span><span>{res["DepSkor"]}</span></div>'
         elif is_live:
             status_html = '<span class="live-anim">⚽ OYNANIYOR...</span>'
-            score_html = '<div style="font-size:0.9rem; color:#00ff85;">LIVE</div>'
+            score_html = '<div style="font-size:0.9rem; color:#00ff85; font-weight:900;">LIVE</div>'
         elif is_today:
-            status_html = '<span class="match-day-badge">🔥 MAÇ GÜNÜ</span>'
-            score_html = '<div style="font-size:1rem; color:#00ff85;">18:30</div>'
+            if cur_t < start_t:
+                status_html = '<span class="match-day-badge">🔥 MAÇ GÜNÜ</span>'
+                score_html = '18:30'
+            else:
+                status_html = '<span>🕒 BEKLENİYOR</span>'
+                score_html = 'VS'
         else:
             status_html = f'<span>🕒 18:30</span>'
-            score_html = '<div style="font-size:0.8rem; color:#94a3b8;">VS</div>'
+            score_html = 'VS'
 
         ev_t, dep_t = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
         tarih_str = "📅 BUGÜN" if is_today else f"{m_dt.strftime('%d.%m.%Y')}"
@@ -175,12 +175,12 @@ with tab2:
         <div class="stadium-card {'match-day-card' if is_today and not res else ''}">
             <div class="fixture-header">
                 <div style="display:flex; gap:10px; align-items:center;">
-                    <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:6px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
+                    <span style="background:#1e293b; color:white; padding:2px 8px; border-radius:4px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
                     <span style="color:#64748b; font-size:10px; font-weight:700;">📍 {arena}</span>
                 </div>
                 <div style="font-size:10px; font-weight:800; color:{'#fbbf24' if is_today else '#94a3b8'};">{tarih_str}</div>
             </div>
-            <div style="padding: 15px 20px; display: flex; align-items: center; justify-content: center;">
+            <div style="padding: 20px 25px; display: flex; align-items: center; justify-content: center;">
                 <div class="team-name" style="text-align:right;">{ev_t}</div>
                 <div class="digital-scoreboard">{score_html}</div>
                 <div class="team-name" style="text-align:left;">{dep_t}</div>
