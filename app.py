@@ -32,46 +32,54 @@ st.markdown("""
 .points-text { font-size: 24px; font-weight: 900; color: #10b981; line-height: 1; }
 .av-text { font-weight: 700; color: #64748b; font-size: 11px; }
 
-/* MAÇ MERKEZİ: SİYAH KUTU VE MESAFE AYARI */
+/* MAÇ MERKEZİ: SKOR KUTUSU DÜZELTİLDİ (TAM MERKEZLEME) */
 .digital-scoreboard {
-    background: #273142; color: #00ff85; font-family: 'JetBrains Mono', monospace;
-    font-size: 1rem; padding: 4px 12px; border-radius: 8px; min-width: 85px;
-    text-align: center; border: 1px solid #334155; margin: 0 45px;
+    background: #273142; 
+    color: #00ff85; 
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem; 
+    
+    /* Dikey ve Yatay Hizalama Düzeltmesi */
+    display: inline-flex;
+    align-items: center; 
+    justify-content: center;
+    
+    height: 40px; /* Sabit yükseklik */
+    min-width: 90px; 
+    padding: 0 10px;
+    border-radius: 10px;
+    border: 1px solid #334155;
+    margin: 0 35px; /* Takımlarla mesafe */
+    line-height: 1; /* Satır yüksekliği hatasını giderir */
 }
-.team-name { font-size: 1rem; font-weight: 800; color: #1e293b; text-transform: uppercase; flex: 1; }
+
+.team-name { font-size: 0.9rem; font-weight: 800; color: #1e293b; text-transform: uppercase; flex: 1; }
 .stadium-card { background: white; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; overflow: hidden; }
 
-/* DETAYLI TABLO */
 .custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 10px; }
 .custom-table th { background: #1e293b; color: white; padding: 10px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 10px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. VERİ YÖNETİMİ VE 16-15 GÜNCELLEMESİ ---
+# --- 2. VERİ YÖNETİMİ ---
 if 'matches' not in st.session_state:
-    # Maç sonucunu otomatik olarak buraya ekledim
     st.session_state.matches = {
         11: {"Ev": "Billispor", "EvSkor": 16, "Dep": "Prospor", "DepSkor": 15}
     }
 
-now = datetime.datetime.utcnow() + datetime.timedelta(hours=3) # Türkiye Saati
-
 def get_live_stats():
-    # Sabit 10 maçlık geçmiş veriler
     data = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
         "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
     }
-    # 11. hafta ve sonrasını ekle
     for w in sorted(st.session_state.matches.keys()):
         m = st.session_state.matches[w]
         data[m["Ev"]]["O"] += 1; data[m["Dep"]]["O"] += 1
         data[m["Ev"]]["AG"] += m["EvSkor"]; data[m["Ev"]]["YG"] += m["DepSkor"]
         data[m["Dep"]]["AG"] += m["DepSkor"]; data[m["Dep"]]["YG"] += m["EvSkor"]
         res = "G" if m["EvSkor"] > m["DepSkor"] else "M" if m["EvSkor"] < m["DepSkor"] else "B"
-        data[m["Ev"]]["form"].append(res)
-        data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
+        data[m["Ev"]]["form"].append(res); data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
         if res == "G": data[m["Ev"]]["P"]+=3; data[m["Ev"]]["G"]+=1; data[m["Dep"]]["M"]+=1
         elif res == "M": data[m["Dep"]]["P"]+=3; data[m["Dep"]]["G"]+=1; data[m["Ev"]]["M"]+=1
         else: data[m["Ev"]]["P"]+=1; data[m["Dep"]]["P"]+=1; data[m["Ev"]]["B"]+=1; data[m["Dep"]]["B"]+=1
@@ -104,23 +112,20 @@ with tab1:
             </div>
         </div>
         """, unsafe_allow_html=True)
-    
-    st.markdown("#### 📉 DETAYLI TABLO")
-    st.markdown(f"""<table class="custom-table"><thead><tr><th>TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>P</th></tr></thead><tbody>{"".join([f"<tr><td>{row['Takım']}</td><td>{row['O']}</td><td>{row['G']}</td><td>{row['B']}</td><td>{row['M']}</td><td>{row['AG']}</td><td>{row['YG']}</td><td>{row['Av']}</td><td style='color:#10b981; font-weight:900;'>{row['P']}</td></tr>" for _, row in stats_df.iterrows()])}</tbody></table>""", unsafe_allow_html=True)
 
 with tab2:
-    start_t = 1910
     base_date = datetime.date(2026, 3, 28)
-    
     for i in range(10):
         w = 11 + i
         m_date = base_date if w == 11 else datetime.date(2026, 3, 29) + datetime.timedelta(weeks=i-1)
         res = st.session_state.matches.get(w)
         
         if res:
-            status = '● BİTTİ'; score_text = f'{res["EvSkor"]} - {res["DepSkor"]}'
+            status = '● BİTTİ'
+            score_display = f'{res["EvSkor"]} - {res["DepSkor"]}'
         else:
-            status = '🕒 18:30'; score_text = 'VS'
+            status = '🕒 18:30'
+            score_display = 'VS'
             if w == 11: status = '🕒 19:10'
 
         t1, t2 = ("Billispor", "Prospor") if w % 2 != 0 else ("Prospor", "Billispor")
@@ -129,9 +134,9 @@ with tab2:
             <div style="background:#f8fafc; padding:8px 15px; display:flex; justify-content:space-between; font-size:10px; font-weight:800; color:#64748b;">
                 <span>{w}. HAFTA</span><span>{m_date.strftime('%d.%m.%Y')}</span>
             </div>
-            <div style="padding:15px 20px; display:flex; align-items:center; justify-content:center;">
+            <div style="padding:20px; display:flex; align-items:center; justify-content:center;">
                 <div class="team-name" style="text-align:right;">{t1}</div>
-                <div class="digital-scoreboard">{score_text}</div>
+                <div class="digital-scoreboard">{score_display}</div>
                 <div class="team-name" style="text-align:left;">{t2}</div>
             </div>
             <div style="background:#f8fafc; padding:8px; text-align:center; font-size:10px; font-weight:800; border-top:1px solid #f1f5f9;">{status}</div>
