@@ -11,9 +11,15 @@ st.markdown("""
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
 .stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
 
-/* CANLI OYNANIYOR ANİMASYONU */
+/* CANLI ANİMASYONLAR */
 @keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
 .live-anim { animation: blink 1.5s infinite; color: #ef4444 !important; font-weight: 900; }
+
+@keyframes pulse-green {
+    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
+    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
+    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
+}
 
 .league-title {
     font-size: clamp(24px, 5vw, 45px); font-weight: 900; text-align: center;
@@ -36,12 +42,28 @@ st.markdown("""
 }
 .W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 
-.custom-table {
-    width: 100%; border-collapse: collapse; background: white;
-    border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+/* MAÇ MERKEZİ ÖZEL TASARIM */
+.stadium-card {
+    background: white;
+    border-radius: 20px; padding: 25px; margin-bottom: 20px;
+    border: 1px solid #e2e8f0;
+    transition: all 0.3s ease;
+    box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
 }
-.custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
-.custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
+.stadium-card:hover { transform: translateY(-3px); box-shadow: 0 10px 15px -3px rgba(0,0,0,0.1); }
+
+.today-card { border-left: 6px solid #10b981 !important; background: #f8fafc; }
+
+.digital-scoreboard {
+    background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
+    font-size: 2.2rem; padding: 12px 28px; border-radius: 12px; text-align: center; 
+    border: 1px solid #334155; display: flex; justify-content: center; align-items: center; min-width: 130px;
+}
+.live-scoreboard { animation: pulse-green 2s infinite; border-color: #10b981; }
+
+.vs-text { color: #64748b; font-size: 0.8rem !important; font-weight: 900; letter-spacing: 2px; }
+.team-name { font-size: 1.2rem; font-weight: 900; color: #1e293b; text-transform: uppercase; }
+.status-pill { font-size: 11px; font-weight: 800; padding: 6px 16px; border-radius: 100px; text-transform: uppercase; }
 
 .analysis-card {
     background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
@@ -49,20 +71,12 @@ st.markdown("""
     text-align: center; box-shadow: 0 20px 40px rgba(0,0,0,0.3);
 }
 
-.stadium-card {
-    background: linear-gradient(145deg, #ffffff, #f8fafc);
-    border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
-    display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
+.custom-table {
+    width: 100%; border-collapse: collapse; background: white;
+    border-radius: 12px; overflow: hidden; box-shadow: 0 4px 15px rgba(0,0,0,0.05);
 }
-.today-card { border: 2px solid #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
-
-.digital-scoreboard {
-    background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
-    font-size: 2.2rem; padding: 10px 25px; border-radius: 15px; text-align: center; 
-    border: 2px solid #1e293b; display: flex; justify-content: center; align-items: center; min-width: 120px;
-}
-.team-name { font-size: 1.1rem; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; }
-.status-pill { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 8px; }
+.custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
+.custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
 </style>
 """, unsafe_allow_html=True)
 
@@ -121,7 +135,7 @@ with tab1:
 with tab2:
     today = datetime.date.today()
     now_time = datetime.datetime.now().time()
-    match_time = datetime.time(18, 30) # MAÇ SAATİ 18:30 OLARAK GÜNCELLENDİ
+    match_time = datetime.time(18, 30)
     aylar = {"March": "Mart", "April": "Nisan", "May": "Mayıs"}
     
     for i in range(10):
@@ -130,40 +144,45 @@ with tab2:
         is_today = m_dt == today
         res = st.session_state.matches.get(w)
         
-        # OYNANIYOR KONTROLÜ (18:30 sonrası)
         is_live = is_today and now_time >= match_time and not res
 
         if res:
-            status_text, status_color, status_bg = '● MAÇ BİTTİ', '#166534', '#dcfce7'
-            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>'
+            status_text, status_color, status_bg = '● BİTTİ', '#166534', '#dcfce7'
+            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1.2rem; color:#475569; margin:0 12px;">-</div><div>{res["DepSkor"]}</div>'
+            score_class = "digital-scoreboard"
         elif is_live:
-            status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR...</span>', '#ef4444', '#fee2e2'
-            score_display = '<div class="vs-text">VS</div>'
+            status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR</span>', '#ef4444', '#fee2e2'
+            score_display = '<div class="vs-text">CANLI</div>'
+            score_class = "digital-scoreboard live-scoreboard"
         elif is_today:
             status_text, status_color, status_bg = '🔥 MAÇ GÜNÜ', '#059669', '#ecfdf5'
             score_display = '<div class="vs-text">VS</div>'
+            score_class = "digital-scoreboard"
         else:
             status_text, status_color, status_bg = '○ BEKLİYOR', '#64748b', '#f1f5f9'
             score_display = '<div class="vs-text">VS</div>'
+            score_class = "digital-scoreboard"
 
         ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
         tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
 
         st.markdown(f"""
         <div class="stadium-card {'today-card' if is_today else ''}">
-            <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
-                <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 18:30</span>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:15px;">
+                <div style="display:flex; align-items:center; gap:10px;">
+                    <span style="background:#1e293b; color:white; padding:4px 12px; border-radius:8px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                    <span style="color:#64748b; font-size:12px; font-weight:700;">🕒 18:30</span>
                 </div>
-                <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
+                <span style="font-size:12px; font-weight:800; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
             </div>
-            <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
-                <div style="flex:1; text-align:center;"><span class="team-name">{ev_t}</span></div>
-                <div class="digital-scoreboard">{score_display}</div>
-                <div style="flex:1; text-align:center;"><span class="team-name">{dep_t}</span></div>
+            <div style="display:flex; justify-content:space-between; align-items:center; padding:10px 0;">
+                <div style="flex:1; text-align:right; padding-right:20px;"><span class="team-name">{ev_t}</span></div>
+                <div class="{score_class}">{score_display}</div>
+                <div style="flex:1; text-align:left; padding-left:20px;"><span class="team-name">{dep_t}</span></div>
             </div>
-            <div style="display:flex; justify-content:center;"><div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div></div>
+            <div style="display:flex; justify-content:center; margin-top:20px;">
+                <div class="status-pill" style="background:{status_bg}; color:{status_color};">{status_text}</div>
+            </div>
         </div>
         """, unsafe_allow_html=True)
 
