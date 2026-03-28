@@ -1,171 +1,144 @@
 import streamlit as st
 import pandas as pd
 import datetime
+import random
+import time
 
-# --- SAYFA AYARI ---
-st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
+st.set_page_config(page_title="Velochori Ultimate League", layout="wide")
 
-# --- CSS: TÜM TASARIM SİSTEMİ ---
+# ---------------- SESSION ----------------
+if "matches" not in st.session_state:
+    st.session_state.matches = {}
+
+if "live" not in st.session_state:
+    st.session_state.live = False
+    st.session_state.minute = 0
+    st.session_state.home_score = 0
+    st.session_state.away_score = 0
+    st.session_state.events = []
+
+if "budget" not in st.session_state:
+    st.session_state.budget = 100
+
+# ---------------- CSS ----------------
 st.markdown("""
 <style>
-@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
-.stApp { background: #f0f4f8; font-family: 'Inter', sans-serif; }
-
-/* CANLI ANİMASYONLAR */
-@keyframes blink { 0% { opacity: 1; } 50% { opacity: 0.4; } 100% { opacity: 1; } }
-.live-anim { animation: blink 1.5s infinite; color: #ef4444 !important; font-weight: 900; }
-
-@keyframes pulse-green {
-    0% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0.4); }
-    70% { box-shadow: 0 0 0 10px rgba(16, 185, 129, 0); }
-    100% { box-shadow: 0 0 0 0 rgba(16, 185, 129, 0); }
-}
-
-.league-title {
-    font-size: clamp(24px, 5vw, 45px); font-weight: 900; text-align: center;
-    padding: 15px 0; background: linear-gradient(90deg, #059669, #10b981, #34d399, #10b981, #059669);
-    background-size: 200% auto; -webkit-background-clip: text; -webkit-text-fill-color: transparent;
-    animation: shine 4s linear infinite;
-}
-@keyframes shine { to { background-position: 200% center; } }
-
-/* FİKSTÜR KARTI DÜZENLEME */
-.stadium-card {
-    background: white; border-radius: 20px; padding: 20px; margin-bottom: 20px;
-    border: 1px solid #e2e8f0; transition: all 0.3s ease;
-}
-.today-card { border-left: 6px solid #10b981 !important; background: #f8fafc; }
-
-/* KUTUCUĞA SIĞDIRMA AYARI */
-.match-row {
-    display: flex; justify-content: space-between; align-items: center; 
-    gap: 10px; width: 100%; padding: 10px 0;
-}
-
-.team-container {
-    flex: 1; /* Eşit alan kaplasınlar */
-    display: flex; align-items: center; justify-content: center;
-    min-width: 0; /* Taşmayı önleyen kritik komut */
-}
-
-.team-name {
-    font-size: clamp(0.8rem, 2.5vw, 1.1rem); /* Dinamik yazı boyutu */
-    font-weight: 900; color: #1e293b; text-transform: uppercase;
-    text-align: center; overflow-wrap: break-word; line-height: 1.2;
-}
-
-.digital-scoreboard {
-    background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
-    font-size: clamp(1.2rem, 3vw, 2rem); padding: 8px 15px; border-radius: 12px; 
-    text-align: center; border: 1px solid #334155;
-    display: flex; justify-content: center; align-items: center;
-    min-width: 100px; flex-shrink: 0; /* Skor kutusu küçülmesin */
-}
-.live-scoreboard { animation: pulse-green 2s infinite; border-color: #10b981; }
-
-.vs-text { color: #64748b; font-size: 0.7rem !important; font-weight: 900; letter-spacing: 1px; }
-
-/* DİĞER STİLLER */
-.team-card {
-    display: flex; justify-content: space-between; align-items: center;
-    background: white; padding: 12px 20px; border-radius: 15px;
-    margin-bottom: 10px; border: 1px solid #e2e8f0;
-}
-.leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
-.f-dot { width: 20px; height: 20px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 3px; }
-.W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
-.status-pill { font-size: 10px; font-weight: 800; padding: 4px 12px; border-radius: 100px; text-transform: uppercase; }
-.custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
-.custom-table th { background: #1e293b; color: white; padding: 8px; font-size: 11px; text-align: center; }
-.custom-table td { padding: 8px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 600; font-size: 13px; }
-.analysis-card { background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%); border-radius: 25px; padding: 40px; color: white; text-align: center; }
+.stApp {background: linear-gradient(135deg,#0f172a,#1e293b); color:white;}
+.card {background:#1e293b;padding:20px;border-radius:20px;margin-bottom:15px;}
+.score {font-size:50px;font-weight:900;color:#22c55e;}
+.live {color:red;animation: blink 1s infinite;}
+@keyframes blink {50%{opacity:0.3;}}
 </style>
 """, unsafe_allow_html=True)
 
-st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
+st.title("🏆 VELOCHORI SUPER LEAGUE PRO")
 
-# --- VERİ VE HESAPLAMA ---
-if 'matches' not in st.session_state: st.session_state.matches = {}
-
-def get_live_stats():
+# ---------------- DATA ----------------
+def get_table():
     data = {
-        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
-        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
+        "Billispor": {"P":18,"AG":150,"YG":154},
+        "Prospor": {"P":12,"AG":154,"YG":150}
     }
-    for w in sorted(st.session_state.matches.keys()):
-        m = st.session_state.matches[w]
-        data[m["Ev"]]["O"] += 1; data[m["Dep"]]["O"] += 1
-        data[m["Ev"]]["AG"] += m["EvSkor"]; data[m["Ev"]]["YG"] += m["DepSkor"]
-        data[m["Dep"]]["AG"] += m["DepSkor"]; data[m["Dep"]]["YG"] += m["EvSkor"]
-        res = "G" if m["EvSkor"] > m["DepSkor"] else "M" if m["EvSkor"] < m["DepSkor"] else "B"
-        data[m["Ev"]]["form"].append(res)
-        data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
-        if res == "G": data[m["Ev"]]["P"]+=3; data[m["Ev"]]["G"]+=1; data[m["Dep"]]["M"]+=1
-        elif res == "M": data[m["Dep"]]["P"]+=3; data[m["Dep"]]["G"]+=1; data[m["Ev"]]["M"]+=1
-        else: data[m["Ev"]]["P"]+=1; data[m["Dep"]]["P"]+=1; data[m["Ev"]]["B"]+=1; data[m["Dep"]]["B"]+=1
-    
-    df = pd.DataFrame.from_dict(data, orient='index').reset_index().rename(columns={'index':'Takım'})
-    df["Av"] = df["AG"] - df["YG"]
-    return df.sort_values(["P", "Av"], ascending=False)
+    df = pd.DataFrame(data).T
+    df["AV"] = df["AG"] - df["YG"]
+    return df.sort_values("P", ascending=False)
 
-# --- SIDEBAR ---
+# ---------------- AI ----------------
+def predict(home, away):
+    df = get_table()
+    if df.loc[home,"P"] > df.loc[away,"P"]:
+        return f"🔥 {home} favori"
+    elif df.loc[home,"P"] < df.loc[away,"P"]:
+        return f"⚡ {away} önde"
+    return "🤝 Dengede"
+
+# ---------------- SIMULATION ----------------
+def simulate():
+    if st.session_state.minute < 90:
+        st.session_state.minute += 1
+
+        if random.random() < 0.07:
+            if random.random() < 0.5:
+                st.session_state.home_score += 1
+                st.session_state.events.insert(0,f"⚽ {st.session_state.minute}' GOL! Ev sahibi attı!")
+            else:
+                st.session_state.away_score += 1
+                st.session_state.events.insert(0,f"⚽ {st.session_state.minute}' GOL! Deplasman attı!")
+
+# ---------------- SIDEBAR ----------------
 with st.sidebar:
-    st.markdown("### 🏟️ MAÇ YÖNETİMİ")
-    with st.form("match_admin"):
-        h_no = st.number_input("Hafta Seç", 11, 20, 11)
-        ev_s, dep_s = ("Prospor", "Billispor") if h_no % 2 == 0 else ("Billispor", "Prospor")
-        c1, c2 = st.columns(2)
-        s1 = c1.number_input(f"{ev_s}", 0, 100, 0)
-        s2 = c2.number_input(f"{dep_s}", 0, 100, 0)
-        if st.form_submit_button("⚽ SKORU İŞLE"):
-            st.session_state.matches[h_no] = {"Ev": ev_s, "EvSkor": s1, "Dep": dep_s, "DepSkor": s2}
-            st.rerun()
+    st.header("🎮 MANAGER MODE")
 
-# --- ANA EKRAN ---
-tab1, tab2, tab3 = st.tabs(["📊 LİG TABLOSU", "🗓️ MAÇ MERKEZİ", "🏆 ŞAMPİYONLUK YOLU"])
+    team = st.selectbox("Takımın", ["Billispor","Prospor"])
+    st.metric("💰 Bütçe", f"{st.session_state.budget}M €")
 
-with tab1:
-    df = get_live_stats()
-    for idx, r in df.reset_index(drop=True).iterrows():
-        is_l = idx == 0
-        f_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
-        st.markdown(f'<div class="team-card {"leader-card" if is_l else ""}"><div style="flex:1;"><span style="background:{"#fbbf24" if is_l else "#f1f5f9"}; padding:2px 8px; border-radius:6px; font-size:10px; font-weight:900;">{ "🏆 LİDER" if is_l else f"RANK {idx+1}"}</span><h3 style="margin:5px 0; color:#1e293b; font-size:1.1rem;">{r["Takım"].upper()}</h3><div style="display:flex;">{f_html}</div></div><div style="font-size:32px; font-weight:900; color:#10b981;">{r["P"]}<small style="font-size:12px; color:#94a3b8; margin-left:2px;">P</small></div></div>', unsafe_allow_html=True)
+    players = {"Messi Jr":50,"Ronaldo Jr":45,"Haaland Mini":60}
 
-with tab2:
-    today = datetime.date.today()
-    now_time = datetime.datetime.now().time()
-    match_time = datetime.time(18, 30)
-    aylar = {"March": "Mart", "April": "Nisan", "May": "Mayıs"}
-    
-    for i in range(10):
-        w = 11 + i
-        m_dt = today + datetime.timedelta(days=7*i)
-        is_today = m_dt == today
-        res = st.session_state.matches.get(w)
-        is_live = is_today and now_time >= match_time and not res
-
-        if res:
-            status_text, status_color, status_bg = '● BİTTİ', '#166534', '#dcfce7'
-            score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 8px;">-</div><div>{res["DepSkor"]}</div>'
-            score_class = "digital-scoreboard"
-        elif is_live:
-            status_text, status_color, status_bg = '⚽ OYNANIYOR', '#ef4444', '#fee2e2'
-            score_display = '<div class="vs-text">CANLI</div>'
-            score_class = "digital-scoreboard live-scoreboard"
-        elif is_today:
-            status_text, status_color, status_bg = '🔥 MAÇ GÜNÜ', '#059669', '#ecfdf5'
-            score_display = '<div class="vs-text">VS</div>'
-            score_class = "digital-scoreboard"
+    p = st.selectbox("Transfer", list(players.keys()))
+    if st.button("Satın Al"):
+        if st.session_state.budget >= players[p]:
+            st.session_state.budget -= players[p]
+            st.success(f"{p} alındı!")
         else:
-            status_text, status_color, status_bg = '○ BEKLİYOR', '#64748b', '#f1f5f9'
-            score_display = '<div class="vs-text">VS</div>'
-            score_class = "digital-scoreboard"
+            st.error("Para yok!")
 
-        ev_t, dep_t = ("Prospor", "Billispor") if w % 2 == 0 else ("Billispor", "Prospor")
-        tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
+# ---------------- TABS ----------------
+tab1, tab2, tab3 = st.tabs(["📊 Lig", "⚽ Canlı Maç", "📈 Analiz"])
 
-        st.markdown(f"""
-        <div class="stadium-card {'today-card' if is_today else ''}">
-            <div style="display:flex; justify-content:space-between; margin-bottom:10px;">
-                <span style="background:#1e293b; color:white; padding:2px 10px; border-radius:6px; font-size:10px; font-weight:800;">{w}. HAFTA</span>
-                <span style="font-size:10px; font-weight:800; color
+# ---------------- TAB 1 ----------------
+with tab1:
+    df = get_table()
+    st.dataframe(df)
+
+    st.subheader("📊 Grafikler")
+    st.bar_chart(df[["AG","YG"]])
+
+# ---------------- TAB 2 ----------------
+with tab2:
+    st.subheader("🔥 CANLI MAÇ")
+
+    col1,col2,col3 = st.columns([2,1,2])
+
+    with col1:
+        st.markdown("<div class='card'>BILLISPOR</div>", unsafe_allow_html=True)
+    with col2:
+        st.markdown(f"<div class='score'>{st.session_state.home_score} - {st.session_state.away_score}</div>", unsafe_allow_html=True)
+        if st.session_state.live:
+            st.markdown(f"<div class='live'>{st.session_state.minute}'</div>", unsafe_allow_html=True)
+    with col3:
+        st.markdown("<div class='card'>PROSPOR</div>", unsafe_allow_html=True)
+
+    st.info(predict("Billispor","Prospor"))
+
+    colA,colB = st.columns(2)
+
+    if colA.button("▶ Maçı Başlat"):
+        st.session_state.live = True
+        st.session_state.minute = 0
+        st.session_state.home_score = 0
+        st.session_state.away_score = 0
+        st.session_state.events = []
+
+    if colB.button("⏹ Durdur"):
+        st.session_state.live = False
+
+    if st.session_state.live:
+        simulate()
+        time.sleep(0.5)
+        st.rerun()
+
+    st.subheader("📺 Maç Anlatımı")
+    for e in st.session_state.events[:10]:
+        st.write(e)
+
+# ---------------- TAB 3 ----------------
+with tab3:
+    df = get_table()
+    lider = df.index[0]
+
+    st.markdown(f"""
+    <div class='card'>
+        <h1>{lider}</h1>
+        <p>Şampiyonluk yolunda lider!</p>
+    </div>
+    """, unsafe_allow_html=True)
