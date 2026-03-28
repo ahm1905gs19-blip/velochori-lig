@@ -1,15 +1,23 @@
 import streamlit as st
 import pandas as pd
-from datetime import datetime, timedelta
+from datetime import datetime, timedelta, time
 
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Super League", page_icon="⚽", layout="wide")
 
-# --- CSS: TASARIM KİMLİĞİ ---
+# --- CSS (AYNI TASARIM, CANLI EFEKT EKLENDİ) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&display=swap');
 .stApp { background: #f1f5f9; font-family: 'Inter', sans-serif; }
+
+/* CANLI YAYIN PARLAMASI */
+@keyframes pulse { 0% { opacity: 1; } 50% { opacity: 0.5; } 100% { opacity: 1; } }
+.live-badge { 
+    color: #ef4444; font-weight: 900; font-size: 12px; 
+    animation: pulse 1.5s infinite; background: #fee2e2;
+    padding: 2px 8px; border-radius: 4px; border: 1px solid #fecaca;
+}
 
 .league-title {
     font-size: clamp(24px, 7vw, 36px); font-weight: 900; text-align: center;
@@ -21,8 +29,7 @@ st.markdown("""
 
 .team-card { 
     display: flex; justify-content: space-between; align-items: center; 
-    background: white; padding: 12px 20px; border-radius: 15px; 
-    margin-bottom: 10px; border: 1px solid #e2e8f0;
+    background: white; padding: 12px 20px; border-radius: 15px; margin-bottom: 10px; border: 1px solid #e2e8f0;
 }
 .leader-card { border: 2px solid #fbbf24; background: linear-gradient(135deg, #fffbeb 0%, #ffffff 100%); }
 .f-dot { width: 18px; height: 18px; border-radius: 5px; display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 900; color: white; margin-right: 4px; }
@@ -35,9 +42,7 @@ st.markdown("""
 }
 .player-node {
     width: 28px; height: 28px; background: white; border-radius: 50%;
-    display: flex; align-items: center; justify-content: center;
-    font-size: 13px; font-weight: 900; color: #1e293b; border: 2px solid #fbbf24;
-    margin: 4px auto;
+    display: flex; align-items: center; justify-content: center; font-size: 13px; font-weight: 900; color: #1e293b; border: 2px solid #fbbf24; margin: 4px auto;
 }
 
 .custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; }
@@ -70,7 +75,7 @@ def get_stats():
     df["Av"] = df["AG"] - df["YG"]
     return df.sort_values(["P", "Av"], ascending=False)
 
-# --- SEKMELER ---
+# --- TABS ---
 tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
@@ -85,35 +90,54 @@ with tab1:
     st.markdown(t_html, unsafe_allow_html=True)
 
 with tab2:
-    st.markdown("<h4 style='text-align:center; color:#64748b; font-size:14px; margin-bottom:15px;'>FİKSTÜR (SAAT 18:30)</h4>", unsafe_allow_html=True)
+    st.markdown("<h4 style='text-align:center; color:#64748b; font-size:14px; margin-bottom:15px;'>MAÇ MERKEZİ</h4>", unsafe_allow_html=True)
     
-    # Tarih Ayarları
-    today = datetime(2026, 3, 28) 
+    now = datetime.now()
+    current_time = now.time()
+    current_date = now.date()
     
+    # 18:30 ve 20:15 (maç sonu tahmini)
+    match_start = time(18, 30)
+    match_end = time(20, 15)
+
     for week in range(11, 21):
         if week == 11:
-            match_date = today.strftime("%d.%m.%Y | CUMARTESİ")
+            m_date_obj = datetime(2026, 3, 28)
             arena = "Filia Arena"
         else:
-            pazar_date = datetime(2026, 3, 29) + timedelta(weeks=(week-12))
-            match_date = pazar_date.strftime("%d.%m.%Y | PAZAR")
+            m_date_obj = datetime(2026, 3, 29) + timedelta(weeks=(week-12))
             arena = "Velochori Arena"
             
+        match_date_str = m_date_obj.strftime("%d.%m.%Y")
+        is_today = (current_date == m_date_obj.date())
+        is_live = is_today and (match_start <= current_time <= match_end)
+        
         ev, dep = ("Billispor", "Prospor") if week % 2 != 0 else ("Prospor", "Billispor")
         res = st.session_state.matches.get(week)
-        score_val = f"{res['EvS']} - {res['DepS']}" if res else "18:30"
         
-        with st.expander(f"📅 {match_date} - {week}. HAFTA", expanded=(week==11)):
+        # Dinamik Skor/Durum Alanı
+        if res:
+            score_display = f"{res['EvS']} - {res['DepS']}"
+            live_label = "BİTTİ"
+        elif is_live:
+            score_display = "OYNANIYOR"
+            live_label = "CANLI"
+        else:
+            score_display = "18:30"
+            live_label = "GELECEK"
+        
+        with st.expander(f"📅 {match_date_str} | {week}. HAFTA - {ev} vs {dep}", expanded=is_today):
             st.markdown(f"""
             <div style="background: white; padding: 15px; border-radius: 12px; border: 1px solid #e2e8f0; text-align: center;">
                 <div style="font-size: 11px; font-weight: 800; color: #10b981; margin-bottom: 5px;">📍 {arena}</div>
+                {"<div class='live-badge'>● CANLI OYNANIYOR</div>" if is_live else ""}
                 <div style="display: flex; justify-content: space-between; align-items: center; padding: 5px 0;">
                     <div style="flex: 1; font-weight: 900; font-size: 16px;">{ev.upper()}</div>
-                    <div style="background: #1e293b; color: #34d399; padding: 4px 15px; border-radius: 8px; font-size: 20px; font-weight: 900;">{score_val}</div>
+                    <div style="background: #1e293b; color: #34d399; padding: 4px 15px; border-radius: 8px; font-size: 18px; font-weight: 900; min-width: 100px;">{score_display}</div>
                     <div style="flex: 1; font-weight: 900; font-size: 16px;">{dep.upper()}</div>
                 </div>
                 <div class="pitch-container">
-                    <div style="color: rgba(255,255,255,0.4); font-size: 9px; font-weight: 800; margin-bottom: 10px; letter-spacing:1px;">TAKTIK DİZİLİŞ (18:30)</div>
+                    <div style="color: rgba(255,255,255,0.4); font-size: 9px; font-weight: 800; margin-bottom: 10px; letter-spacing:1px;">TAKTIK DİZİLİŞ</div>
                     <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 15px;">
                         <div>
                              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 4px;">
