@@ -54,15 +54,13 @@ st.markdown("""
     border-radius: 25px; padding: 20px; margin-bottom: 15px; border: 1px solid #e2e8f0;
     display: flex; flex-direction: column; gap: 15px; position: relative; overflow: hidden;
 }
-/* ERTELENDİ STİLİ */
-.postponed-card { border: 2px dashed #f59e0b !important; background: #fffaf0; opacity: 0.9; }
+.today-card { border: 2px solid #10b981 !important; box-shadow: 0 0 20px rgba(16, 185, 129, 0.15); }
 
 .digital-scoreboard {
     background: #0f172a; color: #34d399; font-family: 'JetBrains Mono', monospace;
     font-size: 2.2rem; padding: 10px 25px; border-radius: 15px; text-align: center; 
     border: 2px solid #1e293b; display: flex; justify-content: center; align-items: center; min-width: 120px;
 }
-.vs-text { color: #64748b; font-size: 0.8rem; font-weight: 900; }
 .team-name { font-size: 1.1rem; font-weight: 900; color: #1e293b; text-transform: uppercase; letter-spacing: 1px; }
 .status-pill { font-size: 11px; font-weight: 800; padding: 4px 12px; border-radius: 8px; }
 </style>
@@ -122,24 +120,28 @@ with tab1:
 
 with tab2:
     today = datetime.date.today()
-    start_date = today
+    now_time = datetime.datetime.now().time()
+    match_time = datetime.time(18, 30) # MAÇ SAATİ 18:30 OLARAK GÜNCELLENDİ
     aylar = {"March": "Mart", "April": "Nisan", "May": "Mayıs"}
     
     for i in range(10):
         w = 11 + i
-        m_dt = start_date + datetime.timedelta(days=7*i)
+        m_dt = today + datetime.timedelta(days=7*i)
         is_today = m_dt == today
         res = st.session_state.matches.get(w)
         
-        # BUGÜNKÜ MAÇI MANUEL OLARAK ERTELENDİ YAPALIM (SKOR GİRİLMEDİYSE)
-        is_postponed = is_today and not res
-        
+        # OYNANIYOR KONTROLÜ (18:30 sonrası)
+        is_live = is_today and now_time >= match_time and not res
+
         if res:
             status_text, status_color, status_bg = '● MAÇ BİTTİ', '#166534', '#dcfce7'
             score_display = f'<div>{res["EvSkor"]}</div><div style="font-size:1rem; color:#475569; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>'
-        elif is_postponed:
-            status_text, status_color, status_bg = '⚠️ ERTELENDİ', '#92400e', '#fef3c7'
-            score_display = '<div class="vs-text">TBD</div>'
+        elif is_live:
+            status_text, status_color, status_bg = '<span class="live-anim">⚽ OYNANIYOR...</span>', '#ef4444', '#fee2e2'
+            score_display = '<div class="vs-text">VS</div>'
+        elif is_today:
+            status_text, status_color, status_bg = '🔥 MAÇ GÜNÜ', '#059669', '#ecfdf5'
+            score_display = '<div class="vs-text">VS</div>'
         else:
             status_text, status_color, status_bg = '○ BEKLİYOR', '#64748b', '#f1f5f9'
             score_display = '<div class="vs-text">VS</div>'
@@ -148,13 +150,13 @@ with tab2:
         tarih_str = f"📅 BUGÜN" if is_today else f"{m_dt.strftime('%d')} {aylar.get(m_dt.strftime('%B'), m_dt.strftime('%B'))}"
 
         st.markdown(f"""
-        <div class="stadium-card {'postponed-card' if is_postponed else ''}">
+        <div class="stadium-card {'today-card' if is_today else ''}">
             <div style="display:flex; justify-content:space-between; align-items:center; border-bottom:1px dashed #e2e8f0; padding-bottom:10px;">
                 <div style="display:flex; align-items:center; gap:8px;">
-                    <span style="background:{'#f59e0b' if is_postponed else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
-                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 19:30</span>
+                    <span style="background:{'#10b981' if is_today else '#059669'}; color:white; padding:4px 12px; border-radius:50px; font-size:12px; font-weight:900;">{w}. HAFTA</span>
+                    <span style="background:#1e293b; color:#fbbf24; padding:4px 10px; border-radius:8px; font-size:11px; font-weight:800; font-family:'JetBrains Mono';">🕒 18:30</span>
                 </div>
-                <span style="font-size:12px; font-weight:700; color:{'#f59e0b' if is_postponed else '#94a3b8'};">{tarih_str}</span>
+                <span style="font-size:12px; font-weight:700; color:{'#10b981' if is_today else '#94a3b8'};">{tarih_str}</span>
             </div>
             <div style="display:flex; justify-content:space-between; align-items:center; padding:15px 0;">
                 <div style="flex:1; text-align:center;"><span class="team-name">{ev_t}</span></div>
