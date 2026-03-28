@@ -5,7 +5,7 @@ import datetime
 # --- SAYFA AYARI ---
 st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
 
-# --- CSS: TASARIM GÜNCELLEMESİ (SAAT KÜÇÜLTÜLDÜ) ---
+# --- CSS: TASARIM GÜNCELLEMESİ (SCOREBOARD FERAHLATILDI) ---
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;700;900&family=JetBrains+Mono:wght@800&display=swap');
@@ -57,17 +57,21 @@ st.markdown("""
     display: flex; justify-content: space-between; align-items: center;
 }
 
-/* SAAT BOYUTU BURADAN KÜÇÜLTÜLDÜ (1.8rem -> 1.3rem) */
+/* --- SCOREBOARD FERAHLATILDI --- */
 .digital-scoreboard {
     background: #273142;
     color: #00ff85;
     font-family: 'JetBrains Mono', monospace;
-    font-size: 1.3rem; /* Boyut küçültüldü */
-    padding: 6px 18px; /* Boşluklar dengelendi */
-    border-radius: 10px;
-    min-width: 85px; /* Kutu genişliği daraltıldı */
+    font-size: 1.3rem;
+    padding: 8px 25px; /* İç boşluklar artırıldı (nefes alıyor) */
+    border-radius: 12px;
+    min-width: 100px; /* Kutunun genişliği dengelendi */
     text-align: center;
     border: 1px solid #334155;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+    display: flex; /* İçerik simetrisi için */
+    justify-content: center;
+    align-items: center;
 }
 
 .team-name { font-size: 1.1rem; font-weight: 800; color: #1e293b; flex: 1; text-transform: uppercase; }
@@ -82,7 +86,7 @@ st.markdown("""
 
 st.markdown('<div class="league-title">🏆 VELOCHORI SUPER LEAGUE 🏆</div>', unsafe_allow_html=True)
 
-# --- VERİ VE HESAPLAMA ---
+# --- VERİ VE HESAPLAMA (DEĞİŞMEDİ) ---
 if 'matches' not in st.session_state: st.session_state.matches = {}
 
 def get_live_stats():
@@ -107,7 +111,7 @@ def get_live_stats():
 
 # --- SIDEBAR ---
 with st.sidebar:
-    st.markdown("### 🏟️ SKOR GİRİŞİ")
+    st.header("⚙️ SKOR GİRİŞİ")
     with st.form("match_admin"):
         h_no = st.number_input("Hafta", 11, 20, 11)
         ev_s, dep_s = ("Billispor", "Prospor") if h_no % 2 != 0 else ("Prospor", "Billispor")
@@ -148,13 +152,13 @@ with tab2:
 
         if res:
             status_html = '<span>● BİTTİ</span>'
-            score_html = f'<div>{res["EvSkor"]}</div><div style="font-size:0.9rem; opacity:0.4; margin:0 10px;">-</div><div>{res["DepSkor"]}</div>'
+            score_html = f'<div>{res["EvSkor"]}</div><div style="font-size:0.9rem; opacity:0.3; margin:0 15px;">-</div><div>{res["DepSkor"]}</div>'
         elif is_live:
             status_html = '<span class="live-anim">⚽ OYNANIYOR...</span>'
             score_html = '<div style="font-size:1rem; color:#00ff85;">LIVE</div>'
         elif is_today:
             status_html = '<span class="match-day-badge">🔥 MAÇ GÜNÜ</span>'
-            score_html = '<div style="font-size:1rem; color:#00ff85;">18:30</div>'
+            score_html = '<div style="font-size:1.1rem; color:#00ff85; letter-spacing:0.5px;">18:30</div>'
         else:
             status_html = f'<span>🕒 18:30</span>'
             score_html = '<div style="font-size:0.9rem; color:#94a3b8;">VS</div>'
@@ -171,7 +175,7 @@ with tab2:
                 </div>
                 <div style="font-size:11px; font-weight:800; color:{'#fbbf24' if is_today else '#94a3b8'};">{tarih_str}</div>
             </div>
-            <div style="padding: 20px 30px; display: flex; align-items: center; justify-content: space-between;">
+            <div style="padding: 25px 30px; display: flex; align-items: center; justify-content: space-between;">
                 <div class="team-name" style="text-align:right;">{ev_t}</div>
                 <div class="digital-scoreboard">{score_html}</div>
                 <div class="team-name" style="text-align:left;">{dep_t}</div>
