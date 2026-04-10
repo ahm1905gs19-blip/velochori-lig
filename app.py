@@ -2,160 +2,151 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-# --- 1. FİKSTÜR ODAKLI ELİT TASARIM ---
-st.set_page_config(page_title="Velochori Fixture Control", page_icon="🗓️", layout="wide")
+# --- 1. PREMIUM DASHBOARD TASARIMI ---
+st.set_page_config(page_title="Velochori Pro Dashboard", page_icon="⚽", layout="wide")
 
 st.markdown("""
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;600;700;800&family=JetBrains+Mono:wght@700&display=swap');
 
-.stApp { background: #fcfcfd; font-family: 'Plus Jakarta Sans', sans-serif; }
+.stApp { background: #f8fafc; font-family: 'Plus Jakarta Sans', sans-serif; }
 
-/* FİKSTÜR BAŞLIKLARI */
-.fixture-header {
-    font-size: 32px; font-weight: 800; color: #1e293b;
-    margin-bottom: 5px; text-align: left; letter-spacing: -1px;
+/* HEADER */
+.main-header {
+    background: white; padding: 30px; border-bottom: 1px solid #e2e8f0;
+    text-align: center; margin-bottom: 30px; border-radius: 0 0 30px 30px;
+    box-shadow: 0 4px 15px rgba(0,0,0,0.02);
 }
-.section-label {
-    color: #64748b; font-size: 14px; font-weight: 600;
-    text-transform: uppercase; letter-spacing: 1px; margin-bottom: 30px;
-}
+.league-title { font-size: 36px; font-weight: 800; color: #1e293b; letter-spacing: -1.5px; margin: 0; }
 
-/* ZAMAN ÇİZGELESİ KARTI */
-.timeline-card {
-    background: white;
-    border-radius: 24px;
-    padding: 25px;
-    margin-bottom: 20px;
-    border: 1px solid #f1f5f9;
-    display: flex;
-    align-items: center;
-    position: relative;
-    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+/* PUAN DURUMU - GLASSMORPHISM TABLE */
+.card-container {
+    background: white; border-radius: 24px; padding: 25px;
+    border: 1px solid #f1f5f9; box-shadow: 0 10px 30px rgba(0,0,0,0.03);
 }
-.timeline-card:hover { 
-    transform: translateX(10px);
-    box-shadow: 20px 20px 60px #d1d9e6, -20px -20px 60px #ffffff;
+.custom-table { width: 100%; border-collapse: collapse; }
+.custom-table th { 
+    background: #f8fafc; color: #64748b; padding: 15px; 
+    font-size: 11px; font-weight: 800; text-transform: uppercase; text-align: center;
 }
+.custom-table td { padding: 18px 15px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 700; color: #334155; }
+.puan-cell { background: #f0fdf4; color: #10b981 !important; font-size: 1.2rem !important; border-radius: 10px; }
 
-/* TARİH BLOĞU */
-.date-badge {
-    min-width: 80px; text-align: center;
-    padding-right: 25px; border-right: 2px solid #f1f5f9;
-    margin-right: 25px;
+/* FİKSTÜR ZAMAN ÇİZGESİ */
+.fixture-card {
+    background: white; border-radius: 20px; padding: 20px;
+    margin-bottom: 15px; border: 1px solid #f1f5f9;
+    display: flex; align-items: center; transition: 0.3s;
 }
-.date-day { font-size: 24px; font-weight: 800; color: #1e293b; line-height: 1; }
-.date-month { font-size: 12px; font-weight: 700; color: #94a3b8; text-transform: uppercase; }
+.fixture-card:hover { transform: translateX(10px); border-color: #0ea5e9; }
+.date-box { min-width: 60px; text-align: center; border-right: 2px solid #f1f5f9; margin-right: 20px; padding-right: 15px; }
+.day-num { font-size: 20px; font-weight: 800; color: #1e293b; display: block; }
+.month-txt { font-size: 10px; color: #94a3b8; font-weight: 700; text-transform: uppercase; }
 
-/* TAKIMLAR VE SKOR */
-.match-info { flex: 3; display: flex; align-items: center; justify-content: space-between; }
-.team-box { flex: 1; font-weight: 700; font-size: 1.1rem; color: #334155; }
-.score-box {
-    background: #f1f5f9; color: #1e293b; padding: 10px 20px;
-    border-radius: 12px; font-family: 'JetBrains Mono', monospace;
-    font-size: 1.3rem; margin: 0 30px; min-width: 100px; text-align: center;
+.score-pill {
+    background: #1e293b; color: #00ff85; padding: 6px 15px;
+    border-radius: 10px; font-family: 'JetBrains Mono', monospace; font-size: 1.1rem;
 }
-.next-match-pill {
-    background: #0ea5e9; color: white; padding: 5px 15px;
-    border-radius: 20px; font-size: 11px; font-weight: 800;
-    position: absolute; top: -10px; right: 30px;
-}
-
-/* STADYUM ETİKETİ */
-.stadium-tag {
-    flex: 1; text-align: right; font-size: 12px;
-    color: #64748b; font-weight: 600;
-}
-.status-dot {
-    width: 8px; height: 8px; border-radius: 50%;
-    display: inline-block; margin-right: 8px;
-}
+.form-dot { width: 8px; height: 8px; border-radius: 50%; display: inline-block; margin-right: 4px; }
+.W { background: #10b981; } .L { background: #ef4444; } .D { background: #94a3b8; }
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. VERİ VE FİKSTÜR MANTIĞI ---
+# --- 2. DATA ENGINE (PROSPOR 20-19 DAHİL) ---
 if 'matches' not in st.session_state:
     st.session_state.matches = {
         11: {"Ev": "Billispor", "EvSkor": 16, "Dep": "Prospor", "DepSkor": 15, "Tarih": datetime.date(2026, 3, 28)},
         12: {"Ev": "Prospor", "EvSkor": 20, "Dep": "Billispor", "DepSkor": 19, "Tarih": datetime.date(2026, 4, 9)}
     }
 
-stadiums = ["Filia Arena", "Velochori Arena", "Olympic Center", "City Stadium"]
+def get_stats():
+    data = {
+        "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
+        "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
+    }
+    for h, m in sorted(st.session_state.matches.items()):
+        data[m["Ev"]]["O"] += 1; data[m["Dep"]]["O"] += 1
+        data[m["Ev"]]["AG"] += m["EvSkor"]; data[m["Ev"]]["YG"] += m["DepSkor"]
+        data[m["Dep"]]["AG"] += m["DepSkor"]; data[m["Dep"]]["YG"] += m["EvSkor"]
+        if m["EvSkor"] > m["DepSkor"]:
+            data[m["Ev"]]["P"] += 3; data[m["Ev"]]["G"] += 1; data[m["Dep"]]["M"] += 1
+            data[m["Ev"]]["form"].append("G"); data[m["Dep"]]["form"].append("M")
+        elif m["EvSkor"] < m["DepSkor"]:
+            data[m["Dep"]]["P"] += 3; data[m["Dep"]]["G"] += 1; data[m["Ev"]]["M"] += 1
+            data[m["Dep"]]["form"].append("G"); data[m["Dep"]]["form"].append("M")
+        else:
+            data[m["Ev"]]["P"] += 1; data[m["Dep"]]["P"] += 1; data[m["Ev"]]["form"].append("B"); data[m["Dep"]]["form"].append("B")
+    
+    df = pd.DataFrame.from_dict(data, orient='index').reset_index().rename(columns={'index':'Takım'})
+    df["AV"] = df["AG"] - df["YG"]
+    return df.sort_values(["P", "AV"], ascending=False)
 
-# --- 3. EKRAN TASARIMI ---
-st.markdown('<div class="fixture-header">Fikstür Takvimi</div>', unsafe_allow_html=True)
-st.markdown('<div class="section-label">Velochori Super League • Gelecek ve Geçmiş Maçlar</div>', unsafe_allow_html=True)
+# --- 3. DASHBOARD RENDER ---
+st.markdown('<div class="main-header"><div class="league-title">Velochori Super League</div></div>', unsafe_allow_html=True)
 
-# Fikstür Sekmeleri
-tab_future, tab_past = st.tabs(["🚀 GELECEK MAÇLAR", "⏪ GEÇMİŞ SONUÇLAR"])
+col1, col2 = st.columns([1.2, 1])
 
-with tab_future:
-    for i in range(13, 21):
-        # 13. Hafta 19 Nisan Pazar, sonrası her Pazar
-        m_date = datetime.date(2026, 4, 19) + datetime.timedelta(weeks=i-13)
-        stad = stadiums[i % len(stadiums)]
-        t1, t2 = ("Billispor", "Prospor") if i % 2 != 0 else ("Prospor", "Billispor")
-        
-        is_next = (i == 13) # En yakın maç vurgusu
-        pill = '<div class="next-match-pill">SIRADAKİ MAÇ</div>' if is_next else ""
-        
-        st.markdown(f"""
-        <div class="timeline-card" style="{'border-left: 5px solid #0ea5e9' if is_next else ''}">
-            {pill}
-            <div class="date-badge">
-                <div class="date-day">{m_date.day}</div>
-                <div class="date-month">NİSAN</div>
-            </div>
-            <div class="match-info">
-                <div class="team-box" style="text-align:right;">{t1}</div>
-                <div class="score-box" style="background:white; border:1px solid #e2e8f0; color:#94a3b8;">VS</div>
-                <div class="team-box" style="text-align:left;">{t2}</div>
-            </div>
-            <div class="stadium-tag">
-                <span class="status-dot" style="background:#fbbf24;"></span>{stad}<br>
-                <span style="font-size:10px;">SAAT: 18:30</span>
-            </div>
+with col1:
+    st.markdown("### 📊 Puan Durumu")
+    df = get_stats()
+    rows = ""
+    for idx, r in df.reset_index(drop=True).iterrows():
+        form_dots = "".join([f'<div class="form-dot {x}"></div>' for x in r["form"][-5:]])
+        rows += f"""
+        <tr>
+            <td style="text-align:left; font-size:1.1rem;">{idx+1}. <b>{r['Takım']}</b><br><small>{form_dots}</small></td>
+            <td>{r['O']}</td><td>{r['G']}</td><td>{r['B']}</td><td>{r['M']}</td>
+            <td>{r['AG']}</td><td>{r['YG']}</td><td>{r['AV']}</td>
+            <td class="puan-cell">{r['P']}</td>
+        </tr>
+        """
+    st.markdown(f"""
+    <div class="card-container">
+        <table class="custom-table">
+            <thead><tr><th style="text-align:left;">TAKIM</th><th>O</th><th>G</th><th>B</th><th>M</th><th>AG</th><th>YG</th><th>AV</th><th>PUAN</th></tr></thead>
+            <tbody>{rows}</tbody>
+        </table>
+    </div>
+    """, unsafe_allow_html=True)
+
+with col2:
+    st.markdown("### 🗓️ Fikstür & Sonuçlar")
+    stadiums = ["Filia Arena", "Velochori Arena", "Olympic Center", "City Stadium"]
+    
+    # 1. Gelecek Maç (Sıradaki)
+    next_h = 13
+    m_date = datetime.date(2026, 4, 19)
+    t1, t2 = ("Billispor", "Prospor")
+    st.markdown(f"""
+    <div class="fixture-card" style="border-left: 5px solid #0ea5e9;">
+        <div class="date-box"><span class="day-num">{m_date.day}</span><span class="month-txt">NİS</span></div>
+        <div style="flex:1; text-align:center;">
+            <div style="font-size:10px; font-weight:800; color:#0ea5e9; margin-bottom:5px;">SIRADAKİ MAÇ • {stadiums[1]}</div>
+            <div style="font-weight:800; font-size:1.1rem;">{t1} <span class="score-pill" style="background:#f1f5f9; color:#64748b;">VS</span> {t2}</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
-with tab_past:
-    for h in sorted(st.session_state.matches.keys(), reverse=True):
-        m = st.session_state.matches[h]
-        stad = stadiums[h % len(stadiums)]
-        
-        st.markdown(f"""
-        <div class="timeline-card">
-            <div class="date-badge">
-                <div class="date-day">{m['Tarih'].day}</div>
-                <div class="date-month">{"MART" if m['Tarih'].month == 3 else "NİSAN"}</div>
-            </div>
-            <div class="match-info">
-                <div class="team-box" style="text-align:right;">{m['Ev']}</div>
-                <div class="score-box">{m['EvSkor']} - {m['DepSkor']}</div>
-                <div class="team-box" style="text-align:left;">{m['Dep']}</div>
-            </div>
-            <div class="stadium-tag">
-                <span class="status-dot" style="background:#10b981;"></span>{stad}<br>
-                <span style="font-size:10px; color:#10b981;">TAMAMLANDI</span>
-            </div>
+    # 2. Son Maç (Dün akşamki 20-19)
+    last_m = st.session_state.matches[12]
+    st.markdown(f"""
+    <div class="fixture-card" style="border-left: 5px solid #10b981;">
+        <div class="date-box"><span class="day-num">09</span><span class="month-txt">NİS</span></div>
+        <div style="flex:1; text-align:center;">
+            <div style="font-size:10px; font-weight:800; color:#10b981; margin-bottom:5px;">SON SONUÇ • {stadiums[0]}</div>
+            <div style="font-weight:800; font-size:1.1rem;">{last_m['Ev']} <span class="score-pill">{last_m['EvSkor']} - {last_m['DepSkor']}</span> {last_m['Dep']}</div>
         </div>
-        """, unsafe_allow_html=True)
+    </div>
+    """, unsafe_allow_html=True)
 
-# Yan Panel (Hızlı Skor Girişi)
+# --- 4. ADMIN PANEL ---
 with st.sidebar:
-    st.markdown("### 🏆 Lig Yönetimi")
-    st.info("Sıradaki maçı onaylamak veya skor girmek için aşağıdaki alanı kullanın.")
-    with st.form("quick_score"):
-        h_sel = st.number_input("Hafta", 11, 20, 13)
-        t1, t2 = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
-        st.write(f"**{t1} vs {t2}**")
-        s1 = st.number_input(f"{t1} Skoru", 0, 100, 0)
-        s2 = st.number_input(f"{t2} Skoru", 0, 100, 0)
-        if st.form_submit_button("Skoru Sisteme İşle"):
-            # Tarih hesaplama mantığıyla kaydet
-            m_date = datetime.date(2026, 4, 19) + datetime.timedelta(weeks=h_sel-13) if h_sel >= 13 else datetime.date.today()
-            st.session_state.matches[h_sel] = {
-                "Ev": t1, "EvSkor": s1, "Dep": t2, "DepSkor": s2, "Tarih": m_date
-            }
-            st.success(f"{h_sel}. Hafta sonuçları kaydedildi!")
-            st.rerun()
+    st.markdown("## ⚙️ Hızlı Güncelle")
+    h_sel = st.number_input("Hafta", 11, 20, 13)
+    ev_t, dep_t = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
+    s1 = st.number_input(f"{ev_t}", 0, 100, 0)
+    s2 = st.number_input(f"{dep_t}", 0, 100, 0)
+    if st.button("KAYDET"):
+        m_date = datetime.date(2026, 4, 19) + datetime.timedelta(weeks=h_sel-13) if h_sel >= 13 else datetime.date.today()
+        st.session_state.matches[h_sel] = {"Ev": ev_t, "EvSkor": s1, "Dep": dep_t, "DepSkor": s2, "Tarih": m_date}
+        st.rerun()
