@@ -2,7 +2,7 @@ import streamlit as st
 import pandas as pd
 import datetime
 
-# --- 1. TASARIM VE CSS ---
+# --- 1. SAYFA VE TASARIM ---
 st.set_page_config(page_title="Velochori Ultimate Lig", page_icon="⚽", layout="wide")
 
 st.markdown("""
@@ -16,12 +16,12 @@ st.markdown("""
     -webkit-background-clip: text; -webkit-text-fill-color: transparent;
 }
 
-/* DETAYLI PUAN TABLOSU */
+/* SENİN İSTEDİĞİN DETAYLI PUAN TABLOSU */
 .custom-table { width: 100%; border-collapse: collapse; background: white; border-radius: 12px; overflow: hidden; margin-top: 10px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
 .custom-table th { background: #1e293b; color: white; padding: 12px; font-size: 11px; text-align: center; }
 .custom-table td { padding: 12px; text-align: center; border-bottom: 1px solid #f1f5f9; font-weight: 700; font-size: 14px; color: #1e293b; }
 
-/* MAÇ KARTLARI */
+/* MAÇ KARTLARI VE DİJİTAL SKOR */
 .stadium-card { background: white; border-radius: 15px; margin-bottom: 20px; border: 1px solid #e2e8f0; overflow: hidden; }
 .digital-scoreboard {
     background: #273142; color: #00ff85; font-family: 'JetBrains Mono', monospace;
@@ -37,28 +37,35 @@ st.markdown("""
 </style>
 """, unsafe_allow_html=True)
 
-# --- 2. VERİ YÖNETİMİ (GÜNCEL SKORLAR) ---
+# --- 2. VERİ YÖNETİMİ (16-15 VE 20-19 BURADA SABİT) ---
 if 'matches' not in st.session_state:
     st.session_state.matches = {
         11: {"Ev": "Billispor", "EvSkor": 16, "Dep": "Prospor", "DepSkor": 15},
-        12: {"Ev": "Prospor", "EvSkor": 20, "Dep": "Billispor", "DepSkor": 19} # Dün akşamki maç
+        12: {"Ev": "Prospor", "EvSkor": 20, "Dep": "Billispor", "DepSkor": 19}
     }
 
 def get_live_stats():
+    # Temel veriler (İlk 10 hafta)
     data = {
         "Billispor": {"O": 10, "G": 6, "B": 0, "M": 4, "AG": 150, "YG": 154, "P": 18, "form": ["G","G","G","M","G"]},
         "Prospor": {"O": 10, "G": 4, "B": 0, "M": 6, "AG": 154, "YG": 150, "P": 12, "form": ["M","M","M","G","M"]}
     }
+    # İşlenen maçları üzerine ekle
     for w in sorted(st.session_state.matches.keys()):
         m = st.session_state.matches[w]
         data[m["Ev"]]["O"] += 1; data[m["Dep"]]["O"] += 1
         data[m["Ev"]]["AG"] += m["EvSkor"]; data[m["Ev"]]["YG"] += m["DepSkor"]
         data[m["Dep"]]["AG"] += m["DepSkor"]; data[m["Dep"]]["YG"] += m["EvSkor"]
-        res = "G" if m["EvSkor"] > m["DepSkor"] else "M" if m["EvSkor"] < m["DepSkor"] else "B"
-        data[m["Ev"]]["form"].append(res); data[m["Dep"]]["form"].append("G" if res=="M" else "M" if res=="G" else "B")
-        if res == "G": data[m["Ev"]]["P"]+=3; data[m["Ev"]]["G"]+=1; data[m["Dep"]]["M"]+=1
-        elif res == "M": data[m["Dep"]]["P"]+=3; data[m["Dep"]]["G"]+=1; data[m["Ev"]]["M"]+=1
-        else: data[m["Ev"]]["P"]+=1; data[m["Dep"]]["P"]+=1; data[m["Ev"]]["B"]+=1; data[m["Dep"]]["B"]+=1
+        
+        if m["EvSkor"] > m["DepSkor"]:
+            data[m["Ev"]]["P"] += 3; data[m["Ev"]]["G"] += 1; data[m["Dep"]]["M"] += 1
+            data[m["Ev"]]["form"].append("G"); data[m["Dep"]]["form"].append("M")
+        elif m["EvSkor"] < m["DepSkor"]:
+            data[m["Dep"]]["P"] += 3; data[m["Dep"]]["G"] += 1; data[m["Ev"]]["M"] += 1
+            data[m["Dep"]]["form"].append("G"); data[m["Ev"]]["form"].append("M")
+        else:
+            data[m["Ev"]]["P"] += 1; data[m["Dep"]]["P"] += 1
+            data[m["Ev"]]["form"].append("B"); data[m["Dep"]]["form"].append("B")
     
     df = pd.DataFrame.from_dict(data, orient='index').reset_index().rename(columns={'index':'Takım'})
     df["Av"] = df["AG"] - df["YG"]
@@ -70,7 +77,8 @@ tab1, tab2 = st.tabs(["📊 PUAN DURUMU", "🗓️ MAÇ MERKEZİ"])
 
 with tab1:
     df = get_live_stats()
-    st.markdown("### 📉 LİG SIRALAMASI")
+    st.markdown("### 📉 DETAYLI PUAN DURUMU")
+    # SENİN İSTEDİĞİN O MEŞHUR TABLO
     st.markdown(f"""
     <table class="custom-table">
         <thead>
@@ -82,19 +90,20 @@ with tab1:
     </table>
     """, unsafe_allow_html=True)
     
+    st.markdown("---")
     for _, r in df.iterrows():
         form_html = "".join([f'<div class="f-dot {"W" if x=="G" else "L" if x=="M" else "D"}">{x}</div>' for x in r["form"][-5:]])
-        st.markdown(f"**{r['Takım']} Son 5 Maç:** <div style='display:inline-flex;'>{form_html}</div>", unsafe_allow_html=True)
+        st.markdown(f"**{r['Takım']} Form:** <div style='display:inline-flex;'>{form_html}</div>", unsafe_allow_html=True)
 
 with tab2:
     stadiums = ["Filia Arena", "Velochori Arena", "Olympic Center", "City Stadium"]
-    # 11. Hafta (28 Mart), 12. Hafta (9 Nisan Perşembe), 13. Hafta haftaya Pazar (19 Nisan)
+    # 11. Hafta (28 Mart), 12. Hafta (9 Nisan Dün), 13. Hafta Haftaya Pazar (19 Nisan)
     for i in range(10):
         w = 11 + i
         if w == 11: m_date = datetime.date(2026, 3, 28)
-        elif w == 12: m_date = datetime.date(2026, 4, 9) # Dün akşam
+        elif w == 12: m_date = datetime.date(2026, 4, 9)
         else:
-            # 13. Haftadan itibaren her Pazar (19 Nisan, 26 Nisan...)
+            # 13. Haftadan itibaren Pazar takvimi
             m_date = datetime.date(2026, 4, 19) + datetime.timedelta(weeks=i-2)
             
         res = st.session_state.matches.get(w)
@@ -120,10 +129,10 @@ with tab2:
 
 with st.sidebar:
     st.markdown("### ⚙️ YÖNETİCİ")
-    with st.form("admin"):
-        h_sel = st.number_input("Hafta", 11, 20, 12)
-        t1_a, t2_a = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
-        s1 = st.number_input(f"{t1_a}", 0, 100, 0); s2 = st.number_input(f"{t2_a}", 0, 100, 0)
-        if st.form_submit_button("GÜNCELLE"):
-            st.session_state.matches[h_sel] = {"Ev": t1_a, "EvSkor": s1, "Dep": t2_a, "DepSkor": s2}
-            st.rerun()
+    h_sel = st.number_input("Hafta", 11, 20, 12)
+    ev_t, dep_t = ("Billispor", "Prospor") if h_sel % 2 != 0 else ("Prospor", "Billispor")
+    s1 = st.number_input(f"{ev_t}", 0, 100, 0)
+    s2 = st.number_input(f"{dep_t}", 0, 100, 0)
+    if st.button("KAYDET"):
+        st.session_state.matches[h_sel] = {"Ev": ev_t, "EvSkor": s1, "Dep": dep_t, "DepSkor": s2}
+        st.rerun()
